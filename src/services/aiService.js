@@ -3,8 +3,8 @@ import toast from 'react-hot-toast';
 
 class AIService {
   constructor() {
-    this.apiKey = 'AIzaSyDxhjzBVsX5pOUmxOEJKiy-TjW4tsjJwhc';
-    this.baseURL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+    this.apiKey = 'AIzaSyAnHkzBYFJ5fl70tkzCyqr0gLLiQvdO3Nc';
+    this.baseURL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
   }
 
   // Mock AI responses for demonstration (fallback when API fails)
@@ -227,36 +227,19 @@ Microsoft Office Suite | Project Management Software | Data Analysis Tools | CRM
       const prompt = this.buildPrompt(type, input, context);
 
       const requestBody = {
-        contents: [{
-          parts: [{
-            text: prompt
-          }]
-        }],
-        generationConfig: {
-          temperature: 0.7,
-          topK: 1,
-          topP: 1,
-          maxOutputTokens: 2048,
-        },
-        safetySettings: [
+        contents: [
           {
-            category: "HARM_CATEGORY_HARASSMENT",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          },
-          {
-            category: "HARM_CATEGORY_HATE_SPEECH",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          },
-          {
-            category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          },
-          {
-            category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
+            parts: [
+              {
+                text: prompt
+              }
+            ]
           }
         ]
       };
+
+      console.log('🤖 Sending request to Gemini API...');
+      console.log('Request body:', JSON.stringify(requestBody, null, 2));
 
       const response = await fetch(`${this.baseURL}?key=${this.apiKey}`, {
         method: 'POST',
@@ -266,21 +249,29 @@ Microsoft Office Suite | Project Management Software | Data Analysis Tools | CRM
         body: JSON.stringify(requestBody),
       });
 
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+
       if (!response.ok) {
-        throw new Error(`API request failed: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        throw new Error(`API request failed: ${response.status} ${response.statusText} - ${errorText}`);
       }
 
       const data = await response.json();
+      console.log('API Response:', JSON.stringify(data, null, 2));
 
-      if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-        return data.candidates[0].content.parts[0].text;
+      if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
+        const result = data.candidates[0].content.parts[0].text;
+        console.log('✅ AI Result:', result);
+        return result;
       } else {
+        console.error('Invalid response structure:', data);
         throw new Error('Invalid response from Gemini API');
       }
     } catch (error) {
-      console.error('AI Service Error:', error);
-      // Fallback to mock response if API fails
-      console.log('Falling back to mock response...');
+      console.error('❌ AI Service Error:', error);
+      console.log('🔄 Falling back to mock response...');
       await new Promise(resolve => setTimeout(resolve, 1000));
       return this.getMockResponse(type, input);
     }
