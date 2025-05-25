@@ -1,68 +1,152 @@
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 class ExportService {
-  // Export CV to PDF
+  // Export CV to PDF (Text-based, not image)
   async exportToPDF(cvData, filename = 'CV') {
     try {
-      // Create a temporary div to render CV content
-      const tempDiv = document.createElement('div');
-      tempDiv.style.position = 'absolute';
-      tempDiv.style.left = '-9999px';
-      tempDiv.style.top = '-9999px';
-      tempDiv.style.width = '210mm'; // A4 width
-      tempDiv.style.minHeight = '297mm'; // A4 height
-      tempDiv.style.padding = '20mm';
-      tempDiv.style.backgroundColor = 'white';
-      tempDiv.style.fontFamily = 'Arial, sans-serif';
-      tempDiv.style.fontSize = '12px';
-      tempDiv.style.lineHeight = '1.5';
-      tempDiv.style.color = '#333';
-
-      // Generate HTML content for CV
-      tempDiv.innerHTML = this.generateCVHTML(cvData);
-      
-      // Add to document
-      document.body.appendChild(tempDiv);
-
-      // Convert to canvas
-      const canvas = await html2canvas(tempDiv, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff'
-      });
-
-      // Remove temporary div
-      document.body.removeChild(tempDiv);
-
-      // Create PDF
-      const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
-      
-      const imgWidth = 210; // A4 width in mm
-      const pageHeight = 297; // A4 height in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 20;
+      const lineHeight = 6;
+      let yPosition = margin;
 
-      // Add first page
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
+      // Helper function to add text with word wrapping
+      const addText = (text, fontSize = 10, isBold = false, isTitle = false) => {
+        if (!text) return;
 
-      // Add additional pages if needed
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+        pdf.setFontSize(fontSize);
+        pdf.setFont('helvetica', isBold ? 'bold' : 'normal');
+
+        const maxWidth = pageWidth - (margin * 2);
+        const lines = pdf.splitTextToSize(text, maxWidth);
+
+        // Check if we need a new page
+        if (yPosition + (lines.length * lineHeight) > pageHeight - margin) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+
+        if (isTitle) {
+          yPosition += 5; // Extra space before titles
+        }
+
+        lines.forEach(line => {
+          pdf.text(line, margin, yPosition);
+          yPosition += lineHeight;
+        });
+
+        if (isTitle) {
+          yPosition += 3; // Extra space after titles
+        }
+      };
+
+      // Helper function to add a line separator
+      const addSeparator = () => {
+        yPosition += 3;
+        pdf.setDrawColor(200, 200, 200);
+        pdf.line(margin, yPosition, pageWidth - margin, yPosition);
+        yPosition += 5;
+      };
+
+      const { personal = {}, experience = [], education = [], skills = [] } = cvData;
+
+      // Header - Personal Information
+      if (personal.fullName) {
+        addText(personal.fullName, 18, true, true);
       }
 
-      // Download PDF
+      // Contact Information
+      const contactInfo = [];
+      if (personal.email) contactInfo.push(`Email: ${personal.email}`);
+      if (personal.phone) contactInfo.push(`Phone: ${personal.phone}`);
+      if (personal.location) contactInfo.push(`Location: ${personal.location}`);
+      if (personal.website) contactInfo.push(`Website: ${personal.website}`);
+
+      if (contactInfo.length > 0) {
+        addText(contactInfo.join(' | '), 10);
+        yPosition += 5;
+      }
+
+      // Professional Summary
+      if (personal.summary) {
+        addSeparator();
+        addText('PROFESSIONAL SUMMARY', 14, true, true);
+        addText(personal.summary, 10);
+      }
+
+      // Work Experience
+      if (experience.length > 0) {
+        addSeparator();
+        addText('WORK EXPERIENCE', 14, true, true);
+
+        experience.forEach((exp, index) => {
+          if (index > 0) yPosition += 5; // Space between experiences
+
+          // Position and Company
+          const positionText = exp.position || 'Position Title';
+          const companyText = exp.company || 'Company Name';
+          addText(`${positionText} at ${companyText}`, 12, true);
+
+          // Date Range
+          const startDate = exp.startDate ? new Date(exp.startDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short' }) : '';
+          const endDate = exp.current ? 'Present' : (exp.endDate ? new Date(exp.endDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short' }) : '');
+          if (startDate || endDate) {
+            addText(`${startDate} - ${endDate}`, 10);
+          }
+
+          // Description
+          if (exp.description) {
+            addText(exp.description, 10);
+          }
+        });
+      }
+
+      // Education
+      if (education.length > 0) {
+        addSeparator();
+        addText('EDUCATION', 14, true, true);
+
+        education.forEach((edu, index) => {
+          if (index > 0) yPosition += 3;
+
+          // Degree and Field
+          let degreeText = edu.degree || 'Degree';
+          if (edu.field) degreeText += ` in ${edu.field}`;
+          addText(degreeText, 12, true);
+
+          // Institution
+          if (edu.institution) {
+            addText(edu.institution, 10);
+          }
+
+          // Graduation Year
+          if (edu.graduationYear) {
+            addText(`Graduated: ${edu.graduationYear}`, 10);
+          }
+        });
+      }
+
+      // Skills
+      if (skills.length > 0) {
+        addSeparator();
+        addText('SKILLS', 14, true, true);
+
+        const skillsText = skills.map(skill => {
+          const skillName = skill.name || 'Skill';
+          const skillLevel = skill.level || 'Intermediate';
+          return `${skillName} (${skillLevel})`;
+        }).join(', ');
+
+        addText(skillsText, 10);
+      }
+
+      // Save the PDF
       pdf.save(`${filename}.pdf`);
+
       return true;
     } catch (error) {
-      console.error('Error exporting to PDF:', error);
+      console.error('Error exporting PDF:', error);
       throw new Error('Failed to export PDF. Please try again.');
     }
   }
@@ -197,7 +281,7 @@ class ExportService {
       const encodedData = btoa(JSON.stringify(cvData));
       const baseUrl = window.location.origin;
       const shareUrl = `${baseUrl}/shared-cv/${encodedData}`;
-      
+
       return shareUrl;
     } catch (error) {
       console.error('Error generating shareable link:', error);
@@ -248,7 +332,7 @@ class ExportService {
     const subject = encodeURIComponent(`${cvData.personal?.fullName || 'Professional'} CV`);
     const shareUrl = this.generateShareableLink(cvData);
     const body = encodeURIComponent(`Hi,\n\nI'd like to share my professional CV with you.\n\nYou can view it here: ${shareUrl}\n\nBest regards,\n${cvData.personal?.fullName || 'Professional'}`);
-    
+
     const mailtoUrl = `mailto:?subject=${subject}&body=${body}`;
     window.open(mailtoUrl);
   }
@@ -266,7 +350,7 @@ class ExportService {
     const shareUrl = this.generateShareableLink(cvData);
     const title = encodeURIComponent(`${cvData.personal?.fullName || 'Professional'} CV`);
     const summary = encodeURIComponent('Check out my professional CV');
-    
+
     const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}&title=${title}&summary=${summary}`;
     window.open(linkedinUrl, '_blank');
   }

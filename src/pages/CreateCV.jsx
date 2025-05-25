@@ -1,17 +1,18 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Save, Eye, Bot, Plus, Trash2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import AIModal from '../components/AIModal';
 import CVPreview from '../components/CVPreview';
 import BackButton from '../components/BackButton';
+import TemplateSelector from '../components/TemplateSelector';
 import cvService from '../services/cvService';
 import exportService from '../services/exportService';
 import toast from 'react-hot-toast';
 
 const CreateCV = () => {
-  const [activeSection, setActiveSection] = useState('personal');
+  const [activeSection, setActiveSection] = useState('template');
   const [loading, setSaving] = useState(false);
   const [showAIModal, setShowAIModal] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
@@ -20,6 +21,12 @@ const CreateCV = () => {
   const [aiModalInitialText, setAiModalInitialText] = useState('');
   const { user, isGuestMode } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Check if we're editing an existing CV
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingCVId, setEditingCVId] = useState(null);
+  const [selectedTemplate, setSelectedTemplate] = useState('modern');
 
   const {
     register,
@@ -44,6 +51,7 @@ const CreateCV = () => {
   });
 
   const sections = [
+    { id: 'template', label: 'Template', icon: '🎨' },
     { id: 'personal', label: 'Personal Info', icon: '👤' },
     { id: 'experience', label: 'Experience', icon: '💼' },
     { id: 'education', label: 'Education', icon: '🎓' },
@@ -51,6 +59,22 @@ const CreateCV = () => {
   ];
 
   const watchedData = watch();
+
+  // Load CV data if editing
+  useEffect(() => {
+    const state = location.state;
+    if (state && state.cvData) {
+      setIsEditing(true);
+      setEditingCVId(state.cvId);
+
+      // Populate form with existing data
+      Object.keys(state.cvData).forEach(key => {
+        setValue(key, state.cvData[key]);
+      });
+
+      toast.success('CV loaded for editing');
+    }
+  }, [location.state, setValue]);
 
   const addExperience = () => {
     const currentExp = watchedData.experience || [];
@@ -110,14 +134,24 @@ const CreateCV = () => {
       // Clean the data
       const cleanedData = cvService.cleanCVData(data);
 
-      if (isGuestMode) {
-        // Save to localStorage for guest mode
-        const savedCV = cvService.saveGuestCV(cleanedData);
-        toast.success('CV saved locally (Guest Mode)');
+      if (isEditing && editingCVId) {
+        // Update existing CV
+        if (isGuestMode) {
+          const savedCV = cvService.updateGuestCV(editingCVId, cleanedData);
+          toast.success('CV updated locally (Guest Mode)');
+        } else {
+          const savedCV = await cvService.updateCV(editingCVId, cleanedData, user.uid);
+          toast.success('CV updated successfully!');
+        }
       } else {
-        // Save to Firebase for authenticated users
-        const savedCV = await cvService.saveCV(cleanedData, user.uid);
-        toast.success('CV saved successfully!');
+        // Create new CV
+        if (isGuestMode) {
+          const savedCV = cvService.saveGuestCV(cleanedData);
+          toast.success('CV saved locally (Guest Mode)');
+        } else {
+          const savedCV = await cvService.saveCV(cleanedData, user.uid);
+          toast.success('CV saved successfully!');
+        }
       }
 
       navigate('/saved-cvs');
@@ -166,6 +200,13 @@ const CreateCV = () => {
       toast.error(error.message || 'Export failed');
     }
   };
+
+  const renderTemplate = () => (
+    <TemplateSelector
+      selectedTemplate={selectedTemplate}
+      onTemplateChange={setSelectedTemplate}
+    />
+  );
 
   const renderPersonalInfo = () => (
     <div className="space-y-6">
@@ -531,6 +572,8 @@ const CreateCV = () => {
 
   const renderCurrentSection = () => {
     switch (activeSection) {
+      case 'template':
+        return renderTemplate();
       case 'personal':
         return renderPersonalInfo();
       case 'experience':
@@ -540,7 +583,7 @@ const CreateCV = () => {
       case 'skills':
         return renderSkills();
       default:
-        return renderPersonalInfo();
+        return renderTemplate();
     }
   };
 
@@ -552,7 +595,7 @@ const CreateCV = () => {
 
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold text-secondary-900 dark:text-white">
-          Create Your CV
+          {isEditing ? 'Edit Your CV' : 'Create Your CV'}
         </h1>
         <div className="flex space-x-3">
           <button

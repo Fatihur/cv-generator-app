@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import { X, Bot, Send, Copy, RefreshCw, Lightbulb, Zap, TestTube } from 'lucide-react';
+import { X, Bot, Send, Copy, RefreshCw, Lightbulb } from 'lucide-react';
 import aiService from '../services/aiService';
-import { aiTestExamples } from '../utils/aiTestExamples';
-import { testGeminiAPI, testGeminiCV } from '../utils/testGeminiAPI';
 import toast from 'react-hot-toast';
 
 const AIModal = ({ isOpen, onClose, onApply, type = 'improve', initialText = '', placeholder = '' }) => {
@@ -62,55 +60,6 @@ const AIModal = ({ isOpen, onClose, onApply, type = 'improve', initialText = '',
   };
 
   const suggestions = aiService.getQuickSuggestions(type);
-
-  // Get example inputs for current type
-  const getExampleInputs = () => {
-    switch (type) {
-      case 'improve':
-        return aiTestExamples.summary.slice(0, 2); // Show first 2 examples
-      case 'skills':
-        return aiTestExamples.skills.slice(0, 2);
-      default:
-        return [];
-    }
-  };
-
-  const handleUseExample = (exampleInput) => {
-    setInputText(exampleInput);
-    toast.success('Contoh dimuat! Klik Generate untuk melihat hasil AI.');
-  };
-
-  const handleTestAPI = async () => {
-    toast.loading('Testing Gemini API...');
-    try {
-      const result = await testGeminiAPI();
-      if (result.success) {
-        toast.success('✅ API Test berhasil! Check console untuk detail.');
-        console.log('API Test Result:', result.result);
-      } else {
-        toast.error('❌ API Test gagal! Check console untuk error.');
-        console.error('API Test Error:', result.error);
-      }
-    } catch (error) {
-      toast.error('❌ Test error: ' + error.message);
-    }
-  };
-
-  const handleTestCV = async () => {
-    toast.loading('Testing CV prompt...');
-    try {
-      const result = await testGeminiCV();
-      if (result.success) {
-        toast.success('✅ CV Test berhasil!');
-        setOutputText(result.result);
-      } else {
-        toast.error('❌ CV Test gagal! Check console.');
-        console.error('CV Test Error:', result.error);
-      }
-    } catch (error) {
-      toast.error('❌ Test error: ' + error.message);
-    }
-  };
 
   if (!isOpen) return null;
 
@@ -173,60 +122,6 @@ const AIModal = ({ isOpen, onClose, onApply, type = 'improve', initialText = '',
                     </li>
                   ))}
                 </ul>
-              </div>
-
-              {/* Example Inputs */}
-              {getExampleInputs().length > 0 && (
-                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-                  <div className="flex items-center space-x-2 mb-3">
-                    <Zap className="w-4 h-4 text-green-600 dark:text-green-400" />
-                    <span className="text-sm font-medium text-green-800 dark:text-green-200">
-                      Contoh Input
-                    </span>
-                  </div>
-                  <div className="space-y-2">
-                    {getExampleInputs().map((example, index) => (
-                      <div key={index} className="text-sm">
-                        <div className="font-medium text-green-800 dark:text-green-200 mb-1">
-                          {example.title}
-                        </div>
-                        <div className="bg-white dark:bg-green-900/30 p-2 rounded border text-green-700 dark:text-green-300 text-xs mb-2">
-                          {example.input}
-                        </div>
-                        <button
-                          onClick={() => handleUseExample(example.input)}
-                          className="text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded transition-colors"
-                        >
-                          Gunakan Contoh Ini
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Test Buttons (Development) */}
-              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-                <div className="flex items-center space-x-2 mb-3">
-                  <TestTube className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
-                  <span className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                    API Testing (Development)
-                  </span>
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={handleTestAPI}
-                    className="text-xs bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded transition-colors"
-                  >
-                    Test API
-                  </button>
-                  <button
-                    onClick={handleTestCV}
-                    className="text-xs bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded transition-colors"
-                  >
-                    Test CV Prompt
-                  </button>
-                </div>
               </div>
 
               {/* Action Buttons */}

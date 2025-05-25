@@ -1,10 +1,38 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, FileText, Bot, Sparkles, TrendingUp, Users } from 'lucide-react';
+import { Plus, FileText, Bot, Sparkles, TrendingUp, Users, Clock, Edit } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import cvService from '../services/cvService';
 
 const Dashboard = () => {
   const { user, isGuestMode } = useAuth();
+  const [recentCVs, setRecentCVs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadRecentCVs();
+  }, [user, isGuestMode]);
+
+  const loadRecentCVs = async () => {
+    try {
+      setLoading(true);
+      let cvs = [];
+
+      if (isGuestMode) {
+        cvs = cvService.getGuestCVs();
+      } else if (user) {
+        cvs = await cvService.getUserCVs(user.uid);
+      }
+
+      // Get only the 3 most recent CVs
+      const recent = cvs.slice(0, 3);
+      setRecentCVs(recent);
+    } catch (error) {
+      console.error('Error loading recent CVs:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const quickActions = [
     {
@@ -59,7 +87,7 @@ const Dashboard = () => {
           Welcome{user ? `, ${user.displayName || user.email?.split('@')[0]}` : ''}!
         </h1>
         <p className="text-secondary-600 dark:text-secondary-400 text-lg">
-          {isGuestMode 
+          {isGuestMode
             ? 'You\'re in guest mode. Create a CV to get started!'
             : 'Ready to create your next professional CV?'
           }
@@ -72,7 +100,7 @@ const Dashboard = () => {
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
             <p className="text-yellow-800 dark:text-yellow-200 text-sm">
-              <strong>Guest Mode:</strong> Your CVs won't be saved permanently. 
+              <strong>Guest Mode:</strong> Your CVs won't be saved permanently.
               <Link to="/register" className="underline ml-1">Create an account</Link> to save your work.
             </p>
           </div>
@@ -124,21 +152,76 @@ const Dashboard = () => {
 
       {/* Recent Activity */}
       <div className="card p-6">
-        <h2 className="text-xl font-bold text-secondary-900 dark:text-white mb-4">
-          Recent Activity
-        </h2>
-        <div className="text-center py-8">
-          <FileText className="w-12 h-12 text-secondary-400 mx-auto mb-4" />
-          <p className="text-secondary-600 dark:text-secondary-400">
-            No recent activity. Start by creating your first CV!
-          </p>
-          <Link
-            to="/create-cv"
-            className="btn-primary mt-4 inline-block"
-          >
-            Create Your First CV
-          </Link>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-secondary-900 dark:text-white">
+            Recent Activity
+          </h2>
+          {recentCVs.length > 0 && (
+            <Link
+              to="/saved-cvs"
+              className="text-primary-600 hover:text-primary-700 text-sm font-medium"
+            >
+              View All
+            </Link>
+          )}
         </div>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+          </div>
+        ) : recentCVs.length > 0 ? (
+          <div className="space-y-3">
+            {recentCVs.map((cv) => (
+              <div key={cv.id} className="flex items-center justify-between p-4 bg-secondary-50 dark:bg-secondary-700 rounded-lg hover:bg-secondary-100 dark:hover:bg-secondary-600 transition-colors">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-primary-100 dark:bg-primary-900/20 rounded-lg flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-secondary-900 dark:text-white">
+                      {cv.personal?.fullName || 'Untitled CV'}
+                    </h3>
+                    <div className="flex items-center space-x-2 text-sm text-secondary-600 dark:text-secondary-400">
+                      <Clock className="w-3 h-3" />
+                      <span>Updated {new Date(cv.updatedAt).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Link
+                    to="/create-cv"
+                    state={{ cvData: cv, cvId: cv.id }}
+                    className="p-2 text-secondary-600 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                    title="Edit"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Link>
+                  <Link
+                    to="/saved-cvs"
+                    className="p-2 text-secondary-600 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
+                    title="View Details"
+                  >
+                    <FileText className="w-4 h-4" />
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <FileText className="w-12 h-12 text-secondary-400 mx-auto mb-4" />
+            <p className="text-secondary-600 dark:text-secondary-400">
+              No recent activity. Start by creating your first CV!
+            </p>
+            <Link
+              to="/create-cv"
+              className="btn-primary mt-4 inline-block"
+            >
+              Create Your First CV
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Tips Section */}

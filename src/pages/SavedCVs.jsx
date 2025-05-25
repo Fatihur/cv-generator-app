@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FileText, Plus, Edit, Download, Share, Trash2, Eye } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import CVPreview from '../components/CVPreview';
@@ -14,6 +14,7 @@ const SavedCVs = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [selectedCV, setSelectedCV] = useState(null);
   const { user, isGuestMode } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadCVs();
@@ -96,6 +97,15 @@ const SavedCVs = () => {
     } catch (error) {
       toast.error(error.message || 'Failed to share CV');
     }
+  };
+
+  const editCV = (cv) => {
+    navigate('/create-cv', {
+      state: {
+        cvData: cv,
+        cvId: cv.id
+      }
+    });
   };
 
   const previewCV = (cv) => {
@@ -203,7 +213,7 @@ const SavedCVs = () => {
                     <Eye className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => {/* TODO: Navigate to edit */}}
+                    onClick={() => editCV(cv)}
                     className="p-2 text-secondary-600 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                     title="Edit"
                   >

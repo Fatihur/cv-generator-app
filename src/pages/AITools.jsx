@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Bot, Sparkles, Target, FileText, Send, Copy, RefreshCw } from 'lucide-react';
 import BackButton from '../components/BackButton';
+import aiService from '../services/aiService';
 import toast from 'react-hot-toast';
 
 const AITools = () => {
@@ -46,55 +47,12 @@ const AITools = () => {
 
     setLoading(true);
     try {
-      // TODO: Implement actual AI API call (OpenAI/Gemini)
-      // For now, simulate AI response
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      const mockResponses = {
-        improve: `Here's an improved version of your text:
-
-• Spearheaded cross-functional initiatives that resulted in 25% increase in operational efficiency
-• Collaborated with stakeholders to implement strategic solutions, driving measurable business outcomes
-• Demonstrated leadership capabilities by mentoring junior team members and facilitating knowledge transfer
-• Utilized data-driven approaches to optimize processes and enhance overall performance metrics`,
-
-        skills: `Recommended skills for your role:
-
-Technical Skills:
-• Python, R, SQL
-• Machine Learning (TensorFlow, PyTorch)
-• Data Visualization (Tableau, Power BI)
-• Statistical Analysis
-• Big Data Technologies (Hadoop, Spark)
-
-Soft Skills:
-• Problem-solving
-• Communication
-• Project Management
-• Team Leadership
-• Critical Thinking`,
-
-        ats: `ATS-Optimized version:
-
-PROFESSIONAL EXPERIENCE
-Software Engineer | ABC Company | 2020-2023
-• Developed and maintained web applications using JavaScript, React, and Node.js
-• Collaborated with cross-functional teams to deliver high-quality software solutions
-• Implemented automated testing procedures, reducing bug reports by 40%
-• Participated in code reviews and mentored junior developers
-
-TECHNICAL SKILLS
-Programming Languages: JavaScript, Python, Java
-Frameworks: React, Node.js, Express
-Databases: MySQL, MongoDB
-Tools: Git, Docker, AWS`
-      };
-
-      setOutputText(mockResponses[activeTab] || 'AI response generated successfully!');
+      const result = await aiService.generateContent(activeTab, inputText);
+      setOutputText(result);
       toast.success('Content generated successfully!');
     } catch (error) {
       console.error('AI generation error:', error);
-      toast.error('Failed to generate content. Please try again.');
+      toast.error(error.message || 'Failed to generate content. Please try again.');
     } finally {
       setLoading(false);
     }
