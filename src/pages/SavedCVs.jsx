@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { FileText, Plus, Edit, Download, Share, Trash2, Eye } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import CVPreview from '../components/CVPreview';
+import BackButton from '../components/BackButton';
 import cvService from '../services/cvService';
 import exportService from '../services/exportService';
 import toast from 'react-hot-toast';
@@ -131,6 +132,11 @@ const SavedCVs = () => {
 
   return (
     <div className="space-y-8">
+      {/* Back Button */}
+      <div>
+        <BackButton to="/" label="Back to Dashboard" />
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

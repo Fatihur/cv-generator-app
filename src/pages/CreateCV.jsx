@@ -5,6 +5,7 @@ import { Save, Eye, Bot, Plus, Trash2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import AIModal from '../components/AIModal';
 import CVPreview from '../components/CVPreview';
+import BackButton from '../components/BackButton';
 import cvService from '../services/cvService';
 import exportService from '../services/exportService';
 import toast from 'react-hot-toast';
@@ -545,6 +546,10 @@ const CreateCV = () => {
 
   return (
     <div className="max-w-6xl mx-auto">
+      <div className="mb-6">
+        <BackButton to="/" label="Back to Dashboard" />
+      </div>
+
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold text-secondary-900 dark:text-white">
           Create Your CV

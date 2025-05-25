@@ -12,6 +12,7 @@ import CreateCV from './pages/CreateCV';
 import SavedCVs from './pages/SavedCVs';
 import AITools from './pages/AITools';
 import Profile from './pages/Profile';
+import About from './pages/About';
 import SharedCV from './pages/SharedCV';
 
 // Protected Route Component
@@ -90,6 +91,7 @@ function App() {
                 <Route path="saved-cvs" element={<SavedCVs />} />
                 <Route path="ai-tools" element={<AITools />} />
                 <Route path="profile" element={<Profile />} />
+                <Route path="about" element={<About />} />
               </Route>
 
               {/* Catch all route */}

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Bot, Sparkles, Target, FileText, Send, Copy, RefreshCw } from 'lucide-react';
+import BackButton from '../components/BackButton';
 import toast from 'react-hot-toast';
 
 const AITools = () => {
@@ -48,7 +49,7 @@ const AITools = () => {
       // TODO: Implement actual AI API call (OpenAI/Gemini)
       // For now, simulate AI response
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
       const mockResponses = {
         improve: `Here's an improved version of your text:
 
@@ -56,7 +57,7 @@ const AITools = () => {
 • Collaborated with stakeholders to implement strategic solutions, driving measurable business outcomes
 • Demonstrated leadership capabilities by mentoring junior team members and facilitating knowledge transfer
 • Utilized data-driven approaches to optimize processes and enhance overall performance metrics`,
-        
+
         skills: `Recommended skills for your role:
 
 Technical Skills:
@@ -72,7 +73,7 @@ Soft Skills:
 • Project Management
 • Team Leadership
 • Critical Thinking`,
-        
+
         ats: `ATS-Optimized version:
 
 PROFESSIONAL EXPERIENCE
@@ -111,6 +112,11 @@ Tools: Git, Docker, AWS`
 
   return (
     <div className="space-y-8">
+      {/* Back Button */}
+      <div>
+        <BackButton to="/" label="Back to Dashboard" />
+      </div>
+
       {/* Header */}
       <div className="text-center">
         <h1 className="text-3xl font-bold text-secondary-900 dark:text-white mb-2">
@@ -156,7 +162,7 @@ Tools: Git, Docker, AWS`
               {currentTool.title}
             </h3>
           </div>
-          
+
           <p className="text-secondary-600 dark:text-secondary-400 mb-4">
             {currentTool.description}
           </p>
@@ -182,7 +188,7 @@ Tools: Git, Docker, AWS`
               )}
               <span>{loading ? 'Generating...' : 'Generate'}</span>
             </button>
-            
+
             <button
               onClick={clearAll}
               className="btn-secondary flex items-center space-x-2"

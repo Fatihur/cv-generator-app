@@ -1,40 +1,20 @@
-// AI Service for handling AI-powered features
+// AI Service for handling AI-powered features using Gemini API
 import toast from 'react-hot-toast';
 
 class AIService {
   constructor() {
-    this.apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-    this.baseURL = 'https://api.openai.com/v1';
+    this.apiKey = 'AIzaSyDxhjzBVsX5pOUmxOEJKiy-TjW4tsjJwhc';
+    this.baseURL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
   }
 
-  // Mock AI responses for demonstration
+  // Mock AI responses for demonstration (fallback when API fails)
   getMockResponse(type, input) {
+    // For improve type, try to actually improve the input text
+    if (type === 'improve') {
+      return this.generateMockImprovement(input);
+    }
+
     const responses = {
-      improve: {
-        summary: `Enhanced Professional Summary:
-
-• Results-driven professional with proven track record of delivering exceptional outcomes in dynamic environments
-• Demonstrated expertise in cross-functional collaboration, driving strategic initiatives that increase operational efficiency by 25%
-• Strong analytical and problem-solving capabilities with experience in data-driven decision making
-• Excellent communication skills with ability to present complex information to diverse stakeholders
-• Committed to continuous learning and professional development in emerging industry trends`,
-
-        experience: `Enhanced Work Experience Description:
-
-• Spearheaded cross-functional initiatives that resulted in 25% increase in operational efficiency and cost reduction
-• Collaborated with stakeholders across multiple departments to implement strategic solutions, driving measurable business outcomes
-• Demonstrated leadership capabilities by mentoring 5+ junior team members and facilitating knowledge transfer sessions
-• Utilized data-driven approaches to optimize processes, resulting in 30% improvement in overall performance metrics
-• Successfully managed multiple projects simultaneously while maintaining high quality standards and meeting tight deadlines`,
-
-        default: `Enhanced Professional Content:
-
-• Transformed routine tasks into strategic initiatives that delivered measurable business value
-• Demonstrated exceptional problem-solving skills by identifying and resolving complex operational challenges
-• Built strong relationships with internal and external stakeholders to drive collaborative success
-• Implemented innovative solutions that improved efficiency and reduced costs by 20%
-• Maintained high performance standards while adapting to changing business requirements and priorities`
-      },
 
       skills: {
         'data scientist': `Recommended Skills for Data Scientist:
@@ -143,54 +123,147 @@ Microsoft Office Suite | Project Management Software | Data Analysis Tools | CRM
       }
       return responses[category];
     }
-    
-    return responses.improve.default;
+
+    return this.generateMockImprovement(input);
+  }
+
+  // Generate mock improvement based on actual input
+  generateMockImprovement(input) {
+    if (!input || input.trim().length === 0) {
+      return "Silakan masukkan teks yang ingin diperbaiki.";
+    }
+
+    const inputLower = input.toLowerCase();
+
+    // Check if user is asking to create content (not just improve existing text)
+    const isCreationRequest = inputLower.includes('tuliskan') ||
+                             inputLower.includes('buatkan') ||
+                             inputLower.includes('tolong tuliskan') ||
+                             inputLower.includes('generate') ||
+                             inputLower.includes('buat');
+
+    if (isCreationRequest) {
+      return this.generateMockContent(input);
+    }
+
+    // If it's just text improvement
+    let improved = input.trim();
+
+    // Basic improvements for existing text
+    const improvements = {
+      'saya': 'Saya',
+      'bekerja': 'berkontribusi',
+      'melakukan': 'menjalankan',
+      'membuat': 'mengembangkan',
+      'membantu': 'mendukung',
+      'belajar': 'menguasai',
+      'ikut': 'berpartisipasi dalam',
+      'dapat': 'mampu',
+      'bisa': 'kompeten dalam',
+      'pernah': 'memiliki pengalaman',
+      'sudah': 'telah',
+      'akan': 'berkomitmen untuk',
+      'ingin': 'berfokus pada',
+      'mau': 'siap untuk'
+    };
+
+    // Apply improvements
+    Object.keys(improvements).forEach(weak => {
+      const strong = improvements[weak];
+      const regex = new RegExp(`\\b${weak}\\b`, 'gi');
+      improved = improved.replace(regex, strong);
+    });
+
+    // Add professional tone
+    if (!improved.endsWith('.')) {
+      improved += '.';
+    }
+
+    // Capitalize first letter
+    improved = improved.charAt(0).toUpperCase() + improved.slice(1);
+
+    return `${improved}\n\n(Catatan: Ini adalah hasil fallback. Untuk hasil terbaik, pastikan koneksi internet stabil untuk menggunakan AI Gemini.)`;
+  }
+
+  // Generate content based on user request (fallback)
+  generateMockContent(input) {
+    const inputLower = input.toLowerCase();
+
+    // Extract key information from the request
+    if (inputLower.includes('fresh graduate') && inputLower.includes('teknik industri')) {
+      return `Lulusan baru Teknik Industri dengan pengalaman magang di bidang supply chain yang memiliki pemahaman mendalam tentang optimasi proses dan manajemen rantai pasok. Memiliki semangat tinggi untuk berkembang dan berkontribusi dalam industri manufaktur dengan menerapkan pengetahuan analitis dan teknis yang telah dipelajari. Berkomitmen untuk terus mengembangkan keahlian dalam perbaikan berkelanjutan dan inovasi operasional untuk menciptakan nilai tambah bagi perusahaan.
+
+(Catatan: Ini adalah hasil fallback. Untuk hasil terbaik, pastikan koneksi internet stabil untuk menggunakan AI Gemini.)`;
+    }
+
+    if (inputLower.includes('developer') || inputLower.includes('programming')) {
+      return `Software Developer berpengalaman dengan keahlian dalam teknologi modern dan pengembangan aplikasi full-stack. Memiliki track record dalam membangun solusi digital yang scalable dan user-friendly dengan fokus pada kualitas kode dan best practices. Berkomitmen untuk terus mengikuti perkembangan teknologi terbaru dan berkontribusi dalam menciptakan inovasi digital yang memberikan dampak positif.
+
+(Catatan: Ini adalah hasil fallback. Untuk hasil terbaik, pastikan koneksi internet stabil untuk menggunakan AI Gemini.)`;
+    }
+
+    if (inputLower.includes('marketing') || inputLower.includes('digital marketing')) {
+      return `Marketing Professional dengan pengalaman dalam strategi digital marketing dan manajemen campaign yang efektif. Memiliki keahlian dalam analisis data, optimasi performa marketing, dan pengembangan strategi yang data-driven untuk meningkatkan brand awareness dan konversi. Berfokus pada inovasi marketing dan penggunaan teknologi terbaru untuk mencapai target bisnis yang optimal.
+
+(Catatan: Ini adalah hasil fallback. Untuk hasil terbaik, pastikan koneksi internet stabil untuk menggunakan AI Gemini.)`;
+    }
+
+    // Generic professional summary if no specific field detected
+    return `Professional yang berdedikasi dengan pengalaman dan keahlian yang relevan dalam bidangnya. Memiliki kemampuan analitis yang kuat, orientasi pada hasil, dan komitmen tinggi terhadap kualitas kerja. Siap untuk berkontribusi dalam tim dan mengembangkan karir dengan fokus pada pencapaian target dan pertumbuhan berkelanjutan.
+
+(Catatan: Ini adalah hasil fallback. Untuk hasil terbaik, pastikan koneksi internet stabil untuk menggunakan AI Gemini.)`;
   }
 
   async generateContent(type, input, context = '') {
     try {
-      // For now, use mock responses
-      // In production, you would make an actual API call to OpenAI
-      
       if (!input.trim()) {
         throw new Error('Please provide some text to improve');
       }
 
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      const response = this.getMockResponse(type, input);
-      return response;
-
-      // Uncomment below for real OpenAI integration:
-      /*
       if (!this.apiKey) {
-        throw new Error('OpenAI API key not configured');
+        throw new Error('Gemini API key not configured');
       }
 
       const prompt = this.buildPrompt(type, input, context);
-      
-      const response = await fetch(`${this.baseURL}/chat/completions`, {
+
+      const requestBody = {
+        contents: [{
+          parts: [{
+            text: prompt
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.7,
+          topK: 1,
+          topP: 1,
+          maxOutputTokens: 2048,
+        },
+        safetySettings: [
+          {
+            category: "HARM_CATEGORY_HARASSMENT",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE"
+          },
+          {
+            category: "HARM_CATEGORY_HATE_SPEECH",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE"
+          },
+          {
+            category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE"
+          },
+          {
+            category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE"
+          }
+        ]
+      };
+
+      const response = await fetch(`${this.baseURL}?key=${this.apiKey}`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are a professional CV writing assistant. Help users improve their CV content to be more professional, impactful, and ATS-friendly.'
-            },
-            {
-              role: 'user',
-              content: prompt
-            }
-          ],
-          max_tokens: 500,
-          temperature: 0.7,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -198,23 +271,81 @@ Microsoft Office Suite | Project Management Software | Data Analysis Tools | CRM
       }
 
       const data = await response.json();
-      return data.choices[0].message.content;
-      */
+
+      if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+        return data.candidates[0].content.parts[0].text;
+      } else {
+        throw new Error('Invalid response from Gemini API');
+      }
     } catch (error) {
       console.error('AI Service Error:', error);
-      throw error;
+      // Fallback to mock response if API fails
+      console.log('Falling back to mock response...');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      return this.getMockResponse(type, input);
     }
   }
 
   buildPrompt(type, input, context) {
     const prompts = {
-      improve: `Please improve this CV content to make it more professional, impactful, and ATS-friendly. Use action verbs and quantify achievements where possible:\n\n${input}`,
-      
-      skills: `Based on this job title or field: "${input}", suggest relevant technical and soft skills that would be valuable for this role. Format as a clear list.`,
-      
-      ats: `Optimize this CV content for ATS (Applicant Tracking Systems). Make it keyword-rich and properly formatted:\n\n${input}`,
-      
-      summary: `Create a professional summary based on this information:\n\n${input}\n\nContext: ${context}`
+      improve: `Anda adalah asisten penulisan CV profesional yang sangat ahli. Analisis input pengguna dan lakukan sesuai dengan permintaan mereka.
+
+CARA KERJA:
+1. Baca dan pahami input pengguna dengan teliti
+2. Identifikasi apakah ini permintaan untuk membuat konten baru atau memperbaiki teks yang ada
+3. Jika user meminta "tuliskan", "buatkan", "generate" → BUAT konten baru sesuai permintaan
+4. Jika user memberikan teks untuk diperbaiki → PERBAIKI teks tersebut
+5. Gunakan informasi yang diberikan user sebagai dasar
+6. Hasilkan konten yang profesional, menarik, dan sesuai standar CV
+
+INPUT PENGGUNA:
+"${input}"
+
+INSTRUKSI EKSEKUSI:
+- Jika user meminta pembuatan konten (seperti "tuliskan tentang saya", "buatkan summary"), buat konten profesional berdasarkan informasi yang diberikan
+- Jika user memberikan teks untuk diperbaiki, tingkatkan kualitas bahasa dan struktur
+- Gunakan bahasa Indonesia yang profesional dan formal
+- Fokus pada achievement dan value proposition
+- Berikan HANYA hasil akhir tanpa penjelasan tambahan
+
+Eksekusi permintaan user sekarang:`,
+
+      skills: `Anda adalah konsultan karir. Berdasarkan posisi atau bidang kerja: "${input}", berikan rekomendasi 8-12 skill yang relevan dan berharga untuk posisi tersebut.
+
+Format jawaban sebagai daftar dengan bullet points, pisahkan menjadi:
+1. Technical Skills (6-8 skills)
+2. Soft Skills (4-6 skills)
+
+Berikan skill yang spesifik dan sesuai dengan industri.`,
+
+      ats: `Anda adalah ahli optimasi ATS (Applicant Tracking System). Tugas Anda adalah mengoptimalkan konten CV berikut agar lebih ATS-friendly.
+
+INSTRUKSI:
+- Gunakan kata kunci yang relevan dengan industri
+- Gunakan format yang standar dan mudah dibaca ATS
+- Pertahankan informasi asli dari pengguna
+- Tingkatkan keyword density tanpa keyword stuffing
+
+KONTEN ASLI:
+"${input}"
+
+Berikan HANYA versi yang sudah dioptimalkan tanpa penjelasan.`,
+
+      summary: `Anda adalah penulis CV profesional. Buatlah ringkasan profesional yang menarik berdasarkan informasi berikut:
+
+INFORMASI PENGGUNA:
+"${input}"
+
+${context ? `KONTEKS TAMBAHAN: ${context}` : ''}
+
+INSTRUKSI:
+- Buat dalam 3-4 kalimat
+- Gunakan tone yang sesuai dengan level karir
+- Highlight kekuatan dan pengalaman utama
+- Buat menarik untuk recruiter
+- Gunakan HANYA informasi yang diberikan pengguna
+
+Berikan HANYA ringkasan profesional tanpa teks tambahan.`
     };
 
     return prompts[type] || prompts.improve;

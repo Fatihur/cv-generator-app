@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { User, Mail, Phone, MapPin, Camera, Save, Shield, Bell, Palette } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import BackButton from '../components/BackButton';
 import toast from 'react-hot-toast';
 
 const Profile = () => {
@@ -34,7 +35,7 @@ const Profile = () => {
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       // TODO: Update user profile in Firebase
       await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
@@ -49,13 +50,13 @@ const Profile = () => {
 
   const handlePreferencesUpdate = async () => {
     setLoading(true);
-    
+
     try {
       // Update theme if changed
       if (preferences.darkMode !== isDarkMode) {
         toggleTheme();
       }
-      
+
       // TODO: Save preferences to Firebase
       await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
       toast.success('Preferences updated successfully!');
@@ -74,9 +75,9 @@ const Profile = () => {
         <div className="relative">
           <div className="w-24 h-24 bg-primary-100 dark:bg-primary-900/20 rounded-full flex items-center justify-center">
             {user?.photoURL ? (
-              <img 
-                src={user.photoURL} 
-                alt="Profile" 
+              <img
+                src={user.photoURL}
+                alt="Profile"
                 className="w-24 h-24 rounded-full object-cover"
               />
             ) : (
@@ -298,7 +299,7 @@ const Profile = () => {
         <h3 className="text-lg font-semibold text-secondary-900 dark:text-white mb-4">
           Password & Security
         </h3>
-        
+
         {isGuestMode ? (
           <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6 text-center">
             <Shield className="w-12 h-12 text-yellow-600 dark:text-yellow-400 mx-auto mb-4" />
@@ -360,6 +361,11 @@ const Profile = () => {
 
   return (
     <div className="space-y-8">
+      {/* Back Button */}
+      <div>
+        <BackButton to="/" label="Back to Dashboard" />
+      </div>
+
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-secondary-900 dark:text-white mb-2">
