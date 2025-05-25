@@ -111,11 +111,19 @@ class CVService {
     }
   }
 
-  // Delete CV
-  async deleteCV(cvId) {
+  // Delete CV for authenticated users
+  async deleteCV(cvId, userId) {
     try {
-      await deleteDoc(doc(db, this.collectionName, cvId));
+      // For now, delete from localStorage
+      // In production, uncomment the Firebase code below
+      const userCVs = this.getUserCVsFromStorage(userId);
+      const filteredCVs = userCVs.filter(cv => cv.id !== cvId);
+      localStorage.setItem(`userCVs_${userId}`, JSON.stringify(filteredCVs));
       return true;
+
+      // TODO: Uncomment for real Firebase integration
+      // await deleteDoc(doc(db, this.collectionName, cvId));
+      // return true;
     } catch (error) {
       console.error('Error deleting CV:', error);
       throw new Error('Failed to delete CV. Please try again.');
@@ -197,6 +205,7 @@ class CVService {
     try {
       const duplicatedData = {
         ...originalCV,
+        cvName: `${originalCV.cvName || originalCV.personal?.fullName || 'Untitled'} (Copy)`,
         personal: {
           ...originalCV.personal,
           fullName: `${originalCV.personal?.fullName || 'Untitled'} (Copy)`
@@ -225,6 +234,11 @@ class CVService {
   // Validate CV data
   validateCVData(cvData) {
     const errors = [];
+
+    // Check CV name
+    if (!cvData.cvName?.trim()) {
+      errors.push('CV name is required');
+    }
 
     // Check required fields
     if (!cvData.personal?.fullName?.trim()) {

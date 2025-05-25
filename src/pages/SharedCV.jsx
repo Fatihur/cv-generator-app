@@ -5,32 +5,33 @@ import exportService from '../services/exportService';
 import toast from 'react-hot-toast';
 
 const SharedCV = () => {
-  const { encodedData } = useParams();
+  const { shareId } = useParams();
   const [cvData, setCvData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     try {
-      if (encodedData) {
-        const decodedData = JSON.parse(atob(encodedData));
-        setCvData(decodedData);
+      if (shareId) {
+        // Get CV data using short ID
+        const sharedCVData = exportService.getSharedCV(shareId);
+        setCvData(sharedCVData);
       } else {
-        setError('Invalid CV link');
+        setError('Invalid share link');
       }
     } catch (err) {
-      console.error('Error decoding CV data:', err);
-      setError('Invalid or corrupted CV link');
+      console.error('Error loading shared CV:', err);
+      setError(err.message || 'Failed to load CV. The link may be invalid or expired.');
     } finally {
       setLoading(false);
     }
-  }, [encodedData]);
+  }, [shareId]);
 
   const handleExportPDF = async () => {
     if (!cvData) return;
-    
+
     try {
-      const filename = cvData.personal?.fullName ? 
+      const filename = cvData.personal?.fullName ?
         cvData.personal.fullName.replace(/\s+/g, '_') : 'CV';
       await exportService.exportToPDF(cvData, filename);
       toast.success('CV exported to PDF successfully!');
@@ -145,7 +146,7 @@ const SharedCV = () => {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               {personal?.fullName || 'Professional Name'}
             </h1>
-            
+
             <div className="flex flex-wrap justify-center items-center gap-4 text-gray-600">
               {personal?.email && (
                 <div className="flex items-center space-x-1">

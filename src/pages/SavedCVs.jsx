@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FileText, Plus, Edit, Download, Share, Trash2, Eye } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import CVPreview from '../components/CVPreview';
+import ExportModal from '../components/ExportModal';
 import BackButton from '../components/BackButton';
 import cvService from '../services/cvService';
 import exportService from '../services/exportService';
@@ -13,6 +14,8 @@ const SavedCVs = () => {
   const [loading, setLoading] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
   const [selectedCV, setSelectedCV] = useState(null);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportingCV, setExportingCV] = useState(null);
   const { user, isGuestMode } = useAuth();
   const navigate = useNavigate();
 
@@ -40,26 +43,6 @@ const SavedCVs = () => {
     }
   };
 
-  const deleteCV = async (cvId) => {
-    if (!confirm('Are you sure you want to delete this CV?')) return;
-
-    try {
-      if (isGuestMode) {
-        await cvService.deleteGuestCV(cvId);
-        const updatedCVs = cvService.getGuestCVs();
-        setCvs(updatedCVs);
-      } else {
-        await cvService.deleteCV(cvId);
-        const updatedCVs = await cvService.getUserCVs(user.uid);
-        setCvs(updatedCVs);
-      }
-      toast.success('CV deleted successfully');
-    } catch (error) {
-      console.error('Error deleting CV:', error);
-      toast.error(error.message || 'Failed to delete CV');
-    }
-  };
-
   const duplicateCV = async (cv) => {
     try {
       if (isGuestMode) {
@@ -78,15 +61,9 @@ const SavedCVs = () => {
     }
   };
 
-  const exportCV = async (cv) => {
-    try {
-      const filename = cv.personal?.fullName ?
-        cv.personal.fullName.replace(/\s+/g, '_') : 'CV';
-      await exportService.exportToPDF(cv, filename);
-      toast.success('CV exported to PDF successfully!');
-    } catch (error) {
-      toast.error(error.message || 'Failed to export CV');
-    }
+  const exportCV = (cv) => {
+    setExportingCV(cv);
+    setShowExportModal(true);
   };
 
   const shareCV = async (cv) => {
@@ -95,7 +72,8 @@ const SavedCVs = () => {
       await exportService.copyToClipboard(shareUrl);
       toast.success('Share link copied to clipboard!');
     } catch (error) {
-      toast.error(error.message || 'Failed to share CV');
+      console.error('Share error:', error);
+      toast.error(error.message || 'Failed to generate share link');
     }
   };
 
@@ -108,6 +86,38 @@ const SavedCVs = () => {
     });
   };
 
+  const deleteCV = async (cvId) => {
+    // Show confirmation dialog
+    const confirmed = window.confirm('Are you sure you want to delete this CV? This action cannot be undone.');
+
+    if (!confirmed) return;
+
+    try {
+      if (isGuestMode) {
+        // Delete from localStorage for guest users
+        await cvService.deleteGuestCV(cvId);
+        const updatedCVs = cvService.getGuestCVs();
+        setCvs(updatedCVs);
+      } else {
+        // Delete from Firebase for authenticated users
+        await cvService.deleteCV(cvId, user.uid);
+        const updatedCVs = await cvService.getUserCVs(user.uid);
+        setCvs(updatedCVs);
+      }
+
+      toast.success('CV deleted successfully');
+
+      // Close preview modal if the deleted CV was being previewed
+      if (selectedCV && selectedCV.id === cvId) {
+        setShowPreview(false);
+        setSelectedCV(null);
+      }
+    } catch (error) {
+      console.error('Error deleting CV:', error);
+      toast.error(error.message || 'Failed to delete CV');
+    }
+  };
+
   const previewCV = (cv) => {
     setSelectedCV(cv);
     setShowPreview(true);
@@ -118,8 +128,8 @@ const SavedCVs = () => {
 
     try {
       if (type === 'pdf') {
-        const filename = selectedCV.personal?.fullName ?
-          selectedCV.personal.fullName.replace(/\s+/g, '_') : 'CV';
+        const filename = selectedCV.cvName ||
+          selectedCV.personal?.fullName?.replace(/\s+/g, '_') || 'CV';
         await exportService.exportToPDF(selectedCV, filename);
         toast.success('CV exported to PDF successfully!');
       } else if (type === 'share') {
@@ -192,7 +202,7 @@ const SavedCVs = () => {
               {/* CV Info */}
               <div className="space-y-2 mb-4">
                 <h3 className="font-semibold text-lg text-secondary-900 dark:text-white truncate">
-                  {cv.personal?.fullName || 'Untitled CV'}
+                  {cv.cvName || cv.personal?.fullName || 'Untitled CV'}
                 </h3>
                 <p className="text-sm text-secondary-600 dark:text-secondary-400">
                   {cv.personal?.email || 'No email'}
@@ -315,6 +325,16 @@ const SavedCVs = () => {
         onClose={() => setShowPreview(false)}
         cvData={selectedCV}
         onExport={handleExport}
+      />
+
+      {/* Export Modal */}
+      <ExportModal
+        isOpen={showExportModal}
+        onClose={() => {
+          setShowExportModal(false);
+          setExportingCV(null);
+        }}
+        cvData={exportingCV}
       />
     </div>
   );

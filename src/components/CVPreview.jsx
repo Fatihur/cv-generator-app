@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Download, Share, Mail, Phone, MapPin, Globe, Copy, MessageCircle, Linkedin } from 'lucide-react';
 import exportService from '../services/exportService';
+import { getTemplateStyle, generateTemplateCSS } from '../utils/templateStyles';
 import toast from 'react-hot-toast';
 
 const CVPreview = ({ isOpen, onClose, cvData, onExport }) => {
@@ -9,7 +10,8 @@ const CVPreview = ({ isOpen, onClose, cvData, onExport }) => {
 
   if (!isOpen || !cvData) return null;
 
-  const { personal, experience = [], education = [], skills = [] } = cvData;
+  const { personal, experience = [], education = [], skills = [], template = 'modern' } = cvData;
+  const templateStyle = getTemplateStyle(template);
 
   const formatDate = (dateString) => {
     if (!dateString) return '';
@@ -26,7 +28,8 @@ const CVPreview = ({ isOpen, onClose, cvData, onExport }) => {
   const handleExportPDF = async () => {
     setExporting(true);
     try {
-      const filename = personal?.fullName ? personal.fullName.replace(/\s+/g, '_') : 'CV';
+      const filename = cvData?.cvName ||
+        personal?.fullName?.replace(/\s+/g, '_') || 'CV';
       await exportService.exportToPDF(cvData, filename);
       toast.success('CV exported to PDF successfully!');
     } catch (error) {
@@ -84,7 +87,7 @@ const CVPreview = ({ isOpen, onClose, cvData, onExport }) => {
           <div>
             <h2 className="text-xl font-bold text-gray-900">CV Preview</h2>
             <p className="text-sm text-gray-600">
-              {personal?.fullName || 'Untitled CV'}
+              {cvData?.cvName || personal?.fullName || 'Untitled CV'}
             </p>
           </div>
           <div className="flex items-center space-x-3">
@@ -163,14 +166,22 @@ const CVPreview = ({ isOpen, onClose, cvData, onExport }) => {
 
         {/* CV Content */}
         <div className="flex-1 overflow-y-auto p-8 bg-white">
-          <div className="max-w-3xl mx-auto bg-white" style={{ minHeight: '297mm' }}>
+          <style>{generateTemplateCSS(template)}</style>
+          <div className="cv-container">
             {/* Header Section */}
-            <div className="text-center mb-8 pb-6 border-b-2 border-gray-200">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            <div className="cv-header">
+              <h1 className="cv-name">
                 {personal?.fullName || 'Your Name'}
               </h1>
 
-              <div className="flex flex-wrap justify-center items-center gap-4 text-gray-600">
+              <div className="cv-contact"
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  justifyContent: templateStyle.layout.headerStyle === 'center' ? 'center' : 'flex-start',
+                  alignItems: 'center',
+                  gap: '1rem'
+                }}>
                 {personal?.email && (
                   <div className="flex items-center space-x-1">
                     <Mail className="w-4 h-4" />

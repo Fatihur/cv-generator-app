@@ -180,7 +180,7 @@ const Dashboard = () => {
                   </div>
                   <div>
                     <h3 className="font-medium text-secondary-900 dark:text-white">
-                      {cv.personal?.fullName || 'Untitled CV'}
+                      {cv.cvName || cv.personal?.fullName || 'Untitled CV'}
                     </h3>
                     <div className="flex items-center space-x-2 text-sm text-secondary-600 dark:text-secondary-400">
                       <Clock className="w-3 h-3" />

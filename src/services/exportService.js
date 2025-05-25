@@ -1,9 +1,12 @@
 import jsPDF from 'jspdf';
+import { getTemplateStyle } from '../utils/templateStyles';
 
 class ExportService {
-  // Export CV to PDF (Text-based, not image)
-  async exportToPDF(cvData, filename = 'CV') {
+  // Export CV to PDF with multiple format options
+  async exportToPDF(cvData, filename = 'CV', format = 'standard') {
     try {
+      // Sanitize filename - remove invalid characters and limit length
+      const sanitizedFilename = this.sanitizeFilename(filename);
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
@@ -49,7 +52,8 @@ class ExportService {
         yPosition += 5;
       };
 
-      const { personal = {}, experience = [], education = [], skills = [] } = cvData;
+      const { personal = {}, experience = [], education = [], skills = [], template = 'modern' } = cvData;
+      const templateStyle = getTemplateStyle(template);
 
       // Header - Personal Information
       if (personal.fullName) {
@@ -141,13 +145,185 @@ class ExportService {
         addText(skillsText, 10);
       }
 
-      // Save the PDF
-      pdf.save(`${filename}.pdf`);
+      // Save the PDF based on format
+      switch (format) {
+        case 'standard':
+          pdf.save(`${sanitizedFilename}.pdf`);
+          break;
+        case 'compact':
+          pdf.save(`${sanitizedFilename}_compact.pdf`);
+          break;
+        case 'detailed':
+          pdf.save(`${sanitizedFilename}_detailed.pdf`);
+          break;
+        default:
+          pdf.save(`${sanitizedFilename}.pdf`);
+      }
 
       return true;
     } catch (error) {
       console.error('Error exporting PDF:', error);
       throw new Error('Failed to export PDF. Please try again.');
+    }
+  }
+
+  // Export CV to different formats
+  async exportToFormat(cvData, filename = 'CV', format = 'pdf') {
+    try {
+      switch (format) {
+        case 'pdf':
+          return await this.exportToPDF(cvData, filename, 'standard');
+        case 'pdf-compact':
+          return await this.exportToPDF(cvData, filename, 'compact');
+        case 'pdf-detailed':
+          return await this.exportToPDF(cvData, filename, 'detailed');
+        case 'txt':
+          return await this.exportToTXT(cvData, filename);
+        case 'json':
+          return await this.exportToJSON(cvData, filename);
+        default:
+          return await this.exportToPDF(cvData, filename, 'standard');
+      }
+    } catch (error) {
+      console.error('Error exporting to format:', error);
+      throw new Error(`Failed to export to ${format}. Please try again.`);
+    }
+  }
+
+  // Export CV to TXT format
+  async exportToTXT(cvData, filename = 'CV') {
+    try {
+      const sanitizedFilename = this.sanitizeFilename(filename);
+      const { personal = {}, experience = [], education = [], skills = [] } = cvData;
+
+      let content = '';
+
+      // Header
+      if (personal.fullName) {
+        content += `${personal.fullName.toUpperCase()}\n`;
+        content += '='.repeat(personal.fullName.length) + '\n\n';
+      }
+
+      // Contact Info
+      const contactInfo = [];
+      if (personal.email) contactInfo.push(`Email: ${personal.email}`);
+      if (personal.phone) contactInfo.push(`Phone: ${personal.phone}`);
+      if (personal.location) contactInfo.push(`Location: ${personal.location}`);
+      if (personal.website) contactInfo.push(`Website: ${personal.website}`);
+
+      if (contactInfo.length > 0) {
+        content += contactInfo.join(' | ') + '\n\n';
+      }
+
+      // Professional Summary
+      if (personal.summary) {
+        content += 'PROFESSIONAL SUMMARY\n';
+        content += '-'.repeat(20) + '\n';
+        content += personal.summary + '\n\n';
+      }
+
+      // Work Experience
+      if (experience.length > 0) {
+        content += 'WORK EXPERIENCE\n';
+        content += '-'.repeat(15) + '\n';
+
+        experience.forEach((exp, index) => {
+          if (index > 0) content += '\n';
+          content += `${exp.position || 'Position'} at ${exp.company || 'Company'}\n`;
+
+          const startDate = exp.startDate ? new Date(exp.startDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short' }) : '';
+          const endDate = exp.current ? 'Present' : (exp.endDate ? new Date(exp.endDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short' }) : '');
+          if (startDate || endDate) {
+            content += `${startDate} - ${endDate}\n`;
+          }
+
+          if (exp.description) {
+            content += exp.description + '\n';
+          }
+        });
+        content += '\n';
+      }
+
+      // Education
+      if (education.length > 0) {
+        content += 'EDUCATION\n';
+        content += '-'.repeat(9) + '\n';
+
+        education.forEach((edu, index) => {
+          if (index > 0) content += '\n';
+          let degreeText = edu.degree || 'Degree';
+          if (edu.field) degreeText += ` in ${edu.field}`;
+          content += degreeText + '\n';
+
+          if (edu.institution) {
+            content += edu.institution + '\n';
+          }
+
+          if (edu.graduationYear) {
+            content += `Graduated: ${edu.graduationYear}\n`;
+          }
+        });
+        content += '\n';
+      }
+
+      // Skills
+      if (skills.length > 0) {
+        content += 'SKILLS\n';
+        content += '-'.repeat(6) + '\n';
+
+        const skillsText = skills.map(skill => {
+          const skillName = skill.name || 'Skill';
+          const skillLevel = skill.level || 'Intermediate';
+          return `${skillName} (${skillLevel})`;
+        }).join(', ');
+
+        content += skillsText + '\n';
+      }
+
+      // Create and download file
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${sanitizedFilename}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      return true;
+    } catch (error) {
+      console.error('Error exporting TXT:', error);
+      throw new Error('Failed to export TXT. Please try again.');
+    }
+  }
+
+  // Export CV to JSON format
+  async exportToJSON(cvData, filename = 'CV') {
+    try {
+      const sanitizedFilename = this.sanitizeFilename(filename);
+
+      // Create clean JSON data
+      const jsonData = {
+        ...cvData,
+        exportedAt: new Date().toISOString(),
+        version: '1.0'
+      };
+
+      const blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${sanitizedFilename}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      return true;
+    } catch (error) {
+      console.error('Error exporting JSON:', error);
+      throw new Error('Failed to export JSON. Please try again.');
     }
   }
 
@@ -274,18 +450,61 @@ class ExportService {
     return start && end ? `${start} - ${end}` : '';
   }
 
-  // Generate shareable link
+  // Generate shareable link with short ID
   generateShareableLink(cvData) {
     try {
-      // Encode CV data
-      const encodedData = btoa(JSON.stringify(cvData));
+      // Generate short ID for the CV
+      const shortId = this.generateShortId();
+
+      // Store CV data in localStorage with short ID
+      const shareData = {
+        cvData,
+        createdAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days
+      };
+
+      localStorage.setItem(`shared_cv_${shortId}`, JSON.stringify(shareData));
+
       const baseUrl = window.location.origin;
-      const shareUrl = `${baseUrl}/shared-cv/${encodedData}`;
+      const shareUrl = `${baseUrl}/shared/${shortId}`;
 
       return shareUrl;
     } catch (error) {
       console.error('Error generating shareable link:', error);
       throw new Error('Failed to generate shareable link.');
+    }
+  }
+
+  // Generate short ID for sharing
+  generateShortId() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < 8; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  }
+
+  // Get shared CV data by ID
+  getSharedCV(shareId) {
+    try {
+      const stored = localStorage.getItem(`shared_cv_${shareId}`);
+      if (!stored) {
+        throw new Error('Shared CV not found or expired');
+      }
+
+      const shareData = JSON.parse(stored);
+
+      // Check if expired
+      if (new Date() > new Date(shareData.expiresAt)) {
+        localStorage.removeItem(`shared_cv_${shareId}`);
+        throw new Error('Shared CV has expired');
+      }
+
+      return shareData.cvData;
+    } catch (error) {
+      console.error('Error getting shared CV:', error);
+      throw new Error('Failed to load shared CV');
     }
   }
 
@@ -353,6 +572,29 @@ class ExportService {
 
     const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}&title=${title}&summary=${summary}`;
     window.open(linkedinUrl, '_blank');
+  }
+
+  // Sanitize filename for safe file download
+  sanitizeFilename(filename) {
+    if (!filename || typeof filename !== 'string') {
+      return 'CV';
+    }
+
+    // Remove invalid characters for filenames
+    let sanitized = filename
+      .replace(/[<>:"/\\|?*]/g, '') // Remove invalid characters
+      .replace(/\s+/g, '_') // Replace spaces with underscores
+      .replace(/[^\w\-_.]/g, '') // Keep only alphanumeric, dash, underscore, dot
+      .replace(/_{2,}/g, '_') // Replace multiple underscores with single
+      .replace(/^_+|_+$/g, ''); // Remove leading/trailing underscores
+
+    // Limit length to 100 characters
+    if (sanitized.length > 100) {
+      sanitized = sanitized.substring(0, 100);
+    }
+
+    // Ensure we have a valid filename
+    return sanitized || 'CV';
   }
 }
 

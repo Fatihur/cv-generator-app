@@ -78,7 +78,7 @@ function App() {
               } />
 
               {/* Shared CV Route (Public) */}
-              <Route path="/shared-cv/:encodedData" element={<SharedCV />} />
+              <Route path="/shared/:shareId" element={<SharedCV />} />
 
               {/* Protected Routes */}
               <Route path="/" element={

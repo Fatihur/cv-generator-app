@@ -36,6 +36,7 @@ const CreateCV = () => {
     formState: { errors }
   } = useForm({
     defaultValues: {
+      cvName: '',
       personal: {
         fullName: '',
         email: '',
@@ -71,6 +72,11 @@ const CreateCV = () => {
       Object.keys(state.cvData).forEach(key => {
         setValue(key, state.cvData[key]);
       });
+
+      // Set template if exists
+      if (state.cvData.template) {
+        setSelectedTemplate(state.cvData.template);
+      }
 
       toast.success('CV loaded for editing');
     }
@@ -131,8 +137,11 @@ const CreateCV = () => {
         return;
       }
 
-      // Clean the data
-      const cleanedData = cvService.cleanCVData(data);
+      // Clean the data and add template
+      const cleanedData = cvService.cleanCVData({
+        ...data,
+        template: selectedTemplate
+      });
 
       if (isEditing && editingCVId) {
         // Update existing CV
@@ -187,8 +196,8 @@ const CreateCV = () => {
   const handleExport = async (type) => {
     try {
       if (type === 'pdf') {
-        const filename = watchedData.personal?.fullName ?
-          watchedData.personal.fullName.replace(/\s+/g, '_') : 'CV';
+        const filename = watchedData.cvName ||
+          watchedData.personal?.fullName?.replace(/\s+/g, '_') || 'CV';
         await exportService.exportToPDF(watchedData, filename);
         toast.success('CV exported to PDF successfully!');
       } else if (type === 'share') {
@@ -202,10 +211,41 @@ const CreateCV = () => {
   };
 
   const renderTemplate = () => (
-    <TemplateSelector
-      selectedTemplate={selectedTemplate}
-      onTemplateChange={setSelectedTemplate}
-    />
+    <div className="space-y-6">
+      {/* CV Name */}
+      <div>
+        <h3 className="text-lg font-semibold text-secondary-900 dark:text-white mb-4">
+          CV Information
+        </h3>
+        <div>
+          <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
+            CV Name *
+          </label>
+          <input
+            {...register('cvName', { required: 'CV name is required' })}
+            className="input-field"
+            placeholder="e.g., Software Engineer Resume, Marketing Manager CV"
+          />
+          {errors.cvName && (
+            <p className="text-red-500 text-sm mt-1">{errors.cvName.message}</p>
+          )}
+          <p className="text-xs text-secondary-500 dark:text-secondary-400 mt-1">
+            This will be used as the filename when downloading your CV
+          </p>
+        </div>
+      </div>
+
+      {/* Template Selection */}
+      <div>
+        <h3 className="text-lg font-semibold text-secondary-900 dark:text-white mb-4">
+          Choose Template
+        </h3>
+        <TemplateSelector
+          selectedTemplate={selectedTemplate}
+          onTemplateChange={setSelectedTemplate}
+        />
+      </div>
+    </div>
   );
 
   const renderPersonalInfo = () => (
