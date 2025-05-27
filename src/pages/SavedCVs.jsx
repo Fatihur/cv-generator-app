@@ -27,8 +27,8 @@ const SavedCVs = () => {
     setLoading(true);
     try {
       if (isGuestMode) {
-        // Load from localStorage for guest mode
-        const guestCVs = cvService.getGuestCVs();
+        // Load from Firebase/localStorage for guest mode
+        const guestCVs = await cvService.getGuestCVs();
         setCvs(guestCVs);
       } else if (user) {
         // Load from Firebase for authenticated users
@@ -47,7 +47,7 @@ const SavedCVs = () => {
     try {
       if (isGuestMode) {
         const duplicatedCV = await cvService.duplicateCV(cv, null, true);
-        const updatedCVs = cvService.getGuestCVs();
+        const updatedCVs = await cvService.getGuestCVs();
         setCvs(updatedCVs);
       } else {
         const duplicatedCV = await cvService.duplicateCV(cv, user.uid, false);
@@ -68,9 +68,13 @@ const SavedCVs = () => {
 
   const shareCV = async (cv) => {
     try {
-      const shareUrl = exportService.generateShareableLink(cv);
+      console.log('Sharing CV to Firebase:', cv);
+
+      const shareUrl = await exportService.generateShareableLink(cv);
+      console.log('Generated Firebase share URL:', shareUrl);
+
       await exportService.copyToClipboard(shareUrl);
-      toast.success('Share link copied to clipboard!');
+      toast.success(`Share link copied to clipboard! Link: ${shareUrl.split('/').pop()}`);
     } catch (error) {
       console.error('Share error:', error);
       toast.error(error.message || 'Failed to generate share link');
@@ -78,7 +82,7 @@ const SavedCVs = () => {
   };
 
   const editCV = (cv) => {
-    navigate('/create-cv', {
+    navigate('/dashboard/create-cv', {
       state: {
         cvData: cv,
         cvId: cv.id
@@ -96,7 +100,7 @@ const SavedCVs = () => {
       if (isGuestMode) {
         // Delete from localStorage for guest users
         await cvService.deleteGuestCV(cvId);
-        const updatedCVs = cvService.getGuestCVs();
+        const updatedCVs = await cvService.getGuestCVs();
         setCvs(updatedCVs);
       } else {
         // Delete from Firebase for authenticated users
@@ -154,7 +158,7 @@ const SavedCVs = () => {
     <div className="space-y-8">
       {/* Back Button */}
       <div>
-        <BackButton to="/" label="Back to Dashboard" />
+        <BackButton to="/dashboard" label="Back to Dashboard" />
       </div>
 
       {/* Header */}
@@ -168,7 +172,7 @@ const SavedCVs = () => {
           </p>
         </div>
         <Link
-          to="/create-cv"
+          to="/dashboard/create-cv"
           className="btn-primary flex items-center space-x-2"
         >
           <Plus className="w-4 h-4" />
@@ -278,7 +282,7 @@ const SavedCVs = () => {
             Start building your professional CV with our easy-to-use builder and AI assistance.
           </p>
           <Link
-            to="/create-cv"
+            to="/dashboard/create-cv"
             className="btn-primary inline-flex items-center space-x-2"
           >
             <Plus className="w-4 h-4" />

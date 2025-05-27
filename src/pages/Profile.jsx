@@ -363,7 +363,7 @@ const Profile = () => {
     <div className="space-y-8">
       {/* Back Button */}
       <div>
-        <BackButton to="/" label="Back to Dashboard" />
+        <BackButton to="/dashboard" label="Back to Dashboard" />
       </div>
 
       {/* Header */}

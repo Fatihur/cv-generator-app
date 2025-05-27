@@ -11,20 +11,28 @@ const SharedCV = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    try {
-      if (shareId) {
-        // Get CV data using short ID
-        const sharedCVData = exportService.getSharedCV(shareId);
+    const loadSharedCV = async () => {
+      try {
+        if (!shareId) {
+          throw new Error('No share ID provided in the URL');
+        }
+
+        console.log('Loading shared CV from Firebase with ID:', shareId);
+
+        // Get CV data using Firebase
+        const sharedCVData = await exportService.getSharedCV(shareId);
+        console.log('Loaded shared CV data:', sharedCVData);
+
         setCvData(sharedCVData);
-      } else {
-        setError('Invalid share link');
+      } catch (err) {
+        console.error('Error loading shared CV:', err);
+        setError(err.message || 'Failed to load CV. The link may be invalid or expired.');
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error('Error loading shared CV:', err);
-      setError(err.message || 'Failed to load CV. The link may be invalid or expired.');
-    } finally {
-      setLoading(false);
-    }
+    };
+
+    loadSharedCV();
   }, [shareId]);
 
   const handleExportPDF = async () => {

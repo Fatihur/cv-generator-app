@@ -47,7 +47,8 @@ const CreateCV = () => {
       },
       experience: [],
       education: [],
-      skills: []
+      skills: [],
+      achievements: []
     }
   });
 
@@ -56,7 +57,8 @@ const CreateCV = () => {
     { id: 'personal', label: 'Personal Info', icon: '👤' },
     { id: 'experience', label: 'Experience', icon: '💼' },
     { id: 'education', label: 'Education', icon: '🎓' },
-    { id: 'skills', label: 'Skills', icon: '⚡' }
+    { id: 'skills', label: 'Skills', icon: '⚡' },
+    { id: 'achievements', label: 'Achievements', icon: '🏆' }
   ];
 
   const watchedData = watch();
@@ -126,6 +128,21 @@ const CreateCV = () => {
     setValue('skills', currentSkills.filter((_, i) => i !== index));
   };
 
+  const addAchievement = () => {
+    const currentAchievements = watchedData.achievements || [];
+    setValue('achievements', [...currentAchievements, {
+      title: '',
+      description: '',
+      date: '',
+      organization: ''
+    }]);
+  };
+
+  const removeAchievement = (index) => {
+    const currentAchievements = watchedData.achievements || [];
+    setValue('achievements', currentAchievements.filter((_, i) => i !== index));
+  };
+
   const onSubmit = async (data) => {
     setSaving(true);
     try {
@@ -146,8 +163,8 @@ const CreateCV = () => {
       if (isEditing && editingCVId) {
         // Update existing CV
         if (isGuestMode) {
-          const savedCV = cvService.updateGuestCV(editingCVId, cleanedData);
-          toast.success('CV updated locally (Guest Mode)');
+          const savedCV = await cvService.updateGuestCV(editingCVId, cleanedData);
+          toast.success('CV updated successfully!');
         } else {
           const savedCV = await cvService.updateCV(editingCVId, cleanedData, user.uid);
           toast.success('CV updated successfully!');
@@ -155,15 +172,15 @@ const CreateCV = () => {
       } else {
         // Create new CV
         if (isGuestMode) {
-          const savedCV = cvService.saveGuestCV(cleanedData);
-          toast.success('CV saved locally (Guest Mode)');
+          const savedCV = await cvService.saveGuestCV(cleanedData);
+          toast.success('CV saved successfully!');
         } else {
           const savedCV = await cvService.saveCV(cleanedData, user.uid);
           toast.success('CV saved successfully!');
         }
       }
 
-      navigate('/saved-cvs');
+      navigate('/dashboard/saved-cvs');
     } catch (error) {
       toast.error(error.message || 'Failed to save CV');
       console.error('Save error:', error);
@@ -610,6 +627,97 @@ const CreateCV = () => {
     </div>
   );
 
+  const renderAchievements = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-secondary-900 dark:text-white">
+          Achievements & Awards
+        </h3>
+        <button
+          type="button"
+          onClick={addAchievement}
+          className="btn-primary flex items-center space-x-2"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Add Achievement</span>
+        </button>
+      </div>
+
+      {(watchedData.achievements || []).map((achievement, index) => (
+        <div key={index} className="card p-6 relative">
+          <button
+            type="button"
+            onClick={() => removeAchievement(index)}
+            className="absolute top-4 right-4 text-red-500 hover:text-red-700"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
+                Achievement Title *
+              </label>
+              <input
+                {...register(`achievements.${index}.title`, { required: 'Achievement title is required' })}
+                className="input-field"
+                placeholder="e.g., Employee of the Year, Best Project Award"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
+                Organization/Company
+              </label>
+              <input
+                {...register(`achievements.${index}.organization`)}
+                className="input-field"
+                placeholder="Company or organization name"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
+                Date Received
+              </label>
+              <input
+                type="month"
+                {...register(`achievements.${index}.date`)}
+                className="input-field"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
+                Description
+                <button
+                  type="button"
+                  onClick={() => openAIModal('improve', `achievements.${index}.description`, watchedData.achievements?.[index]?.description)}
+                  className="ml-2 text-primary-600 hover:text-primary-700 transition-colors"
+                  title="Get AI help"
+                >
+                  <Bot className="w-4 h-4 inline" />
+                </button>
+              </label>
+              <textarea
+                {...register(`achievements.${index}.description`)}
+                rows={3}
+                className="input-field"
+                placeholder="Describe the achievement and its significance..."
+              />
+            </div>
+          </div>
+        </div>
+      ))}
+
+      {(!watchedData.achievements || watchedData.achievements.length === 0) && (
+        <div className="text-center py-8 text-secondary-500 dark:text-secondary-400">
+          No achievements added yet. Click "Add Achievement" to get started.
+        </div>
+      )}
+    </div>
+  );
+
   const renderCurrentSection = () => {
     switch (activeSection) {
       case 'template':
@@ -622,6 +730,8 @@ const CreateCV = () => {
         return renderEducation();
       case 'skills':
         return renderSkills();
+      case 'achievements':
+        return renderAchievements();
       default:
         return renderTemplate();
     }
@@ -630,7 +740,7 @@ const CreateCV = () => {
   return (
     <div className="max-w-6xl mx-auto">
       <div className="mb-6">
-        <BackButton to="/" label="Back to Dashboard" />
+        <BackButton to="/dashboard" label="Back to Dashboard" />
       </div>
 
       <div className="flex items-center justify-between mb-8">

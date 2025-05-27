@@ -5,22 +5,22 @@ import { Home, FileText, Bot, User } from 'lucide-react';
 const BottomNavigation = () => {
   const navItems = [
     {
-      to: '/',
+      to: '/dashboard',
       icon: Home,
       label: 'Home'
     },
     {
-      to: '/saved-cvs',
+      to: '/dashboard/saved-cvs',
       icon: FileText,
       label: 'Saved CVs'
     },
     {
-      to: '/ai-tools',
+      to: '/dashboard/ai-tools',
       icon: Bot,
       label: 'AI Tools'
     },
     {
-      to: '/profile',
+      to: '/dashboard/profile',
       icon: User,
       label: 'Profile'
     }

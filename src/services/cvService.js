@@ -1,67 +1,119 @@
-import { db } from '../config/firebase';
+import { v4 as uuidv4 } from 'uuid';
 import {
   collection,
-  addDoc,
-  updateDoc,
-  deleteDoc,
   doc,
+  setDoc,
+  getDoc,
   getDocs,
+  deleteDoc,
   query,
   where,
-  orderBy
+  orderBy,
+  serverTimestamp,
+  updateDoc,
+  addDoc
 } from 'firebase/firestore';
-// import { v4 as uuidv4 } from 'uuid';
+import { db } from '../config/firebase';
 
 class CVService {
   constructor() {
     this.collectionName = 'cvs';
+    this.guestCollectionName = 'guest_cvs';
   }
 
   // Generate a unique ID for CVs
   generateId() {
-    return Date.now().toString() + Math.random().toString(36).substr(2, 9);
+    return uuidv4();
   }
 
   // Save CV for authenticated users (Firebase)
   async saveCV(cvData, userId) {
     try {
+      console.log('Saving CV to Firebase for user:', userId);
+
+      const cvId = this.generateId();
       const cvWithMetadata = {
         ...cvData,
         userId,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        id: this.generateId()
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        id: cvId
       };
 
-      // For now, simulate Firebase save by using localStorage with user prefix
-      // In production, uncomment the Firebase code below
-      const userCVs = this.getUserCVsFromStorage(userId);
-      userCVs.push(cvWithMetadata);
-      localStorage.setItem(`userCVs_${userId}`, JSON.stringify(userCVs));
+      // Save to Firebase
+      const docRef = doc(db, this.collectionName, cvId);
+      await setDoc(docRef, cvWithMetadata);
 
-      return cvWithMetadata;
+      console.log('CV saved to Firebase successfully:', cvId);
+      return { ...cvWithMetadata, id: cvId };
 
-      // TODO: Uncomment for real Firebase integration
-      // const docRef = await addDoc(collection(db, this.collectionName), cvWithMetadata);
-      // return { ...cvWithMetadata, firebaseId: docRef.id };
     } catch (error) {
-      console.error('Error saving CV:', error);
-      throw new Error('Failed to save CV. Please try again.');
+      console.error('Error saving CV to Firebase:', error);
+
+      // Fallback to localStorage
+      console.log('Falling back to localStorage...');
+      try {
+        const cvWithMetadata = {
+          ...cvData,
+          userId,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          id: this.generateId(),
+          source: 'localStorage'
+        };
+
+        const userCVs = this.getUserCVsFromStorage(userId);
+        userCVs.push(cvWithMetadata);
+        localStorage.setItem(`userCVs_${userId}`, JSON.stringify(userCVs));
+
+        console.log('CV saved to localStorage successfully');
+        return cvWithMetadata;
+      } catch (localError) {
+        console.error('Error saving to localStorage:', localError);
+        throw new Error('Failed to save CV. Please try again.');
+      }
     }
   }
 
   // Update existing CV
   async updateCV(cvId, cvData, userId) {
     try {
+      console.log('Updating CV in Firebase:', cvId);
+
       const updatedData = {
         ...cvData,
-        updatedAt: new Date().toISOString()
+        updatedAt: serverTimestamp()
       };
 
-      const cvRef = doc(db, this.collectionName, cvId);
-      await updateDoc(cvRef, updatedData);
+      // Try Firebase first
+      try {
+        const cvRef = doc(db, this.collectionName, cvId);
+        await updateDoc(cvRef, updatedData);
 
-      return { ...updatedData, id: cvId };
+        console.log('CV updated in Firebase successfully');
+        return { ...updatedData, id: cvId };
+      } catch (firebaseError) {
+        console.warn('Firebase update failed, trying localStorage:', firebaseError);
+
+        // Fallback to localStorage
+        const userCVs = this.getUserCVsFromStorage(userId);
+        const cvIndex = userCVs.findIndex(cv => cv.id === cvId);
+
+        if (cvIndex === -1) {
+          throw new Error('CV not found');
+        }
+
+        userCVs[cvIndex] = {
+          ...userCVs[cvIndex],
+          ...cvData,
+          updatedAt: new Date().toISOString()
+        };
+
+        localStorage.setItem(`userCVs_${userId}`, JSON.stringify(userCVs));
+        console.log('CV updated in localStorage successfully');
+
+        return userCVs[cvIndex];
+      }
     } catch (error) {
       console.error('Error updating CV:', error);
       throw new Error('Failed to update CV. Please try again.');
@@ -71,29 +123,49 @@ class CVService {
   // Get all CVs for a user
   async getUserCVs(userId) {
     try {
-      // For now, get from localStorage
-      // In production, uncomment the Firebase code below
-      const userCVs = this.getUserCVsFromStorage(userId);
-      return userCVs.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+      console.log('Getting CVs from Firebase for user:', userId);
 
-      // TODO: Uncomment for real Firebase integration
-      // const q = query(
-      //   collection(db, this.collectionName),
-      //   where('userId', '==', userId),
-      //   orderBy('updatedAt', 'desc')
-      // );
+      // Try Firebase first
+      try {
+        const q = query(
+          collection(db, this.collectionName),
+          where('userId', '==', userId)
+        );
 
-      // const querySnapshot = await getDocs(q);
-      // const cvs = [];
+        const querySnapshot = await getDocs(q);
+        const cvs = [];
 
-      // querySnapshot.forEach((doc) => {
-      //   cvs.push({
-      //     firebaseId: doc.id,
-      //     ...doc.data()
-      //   });
-      // });
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          cvs.push({
+            ...data,
+            id: doc.id,
+            source: 'firebase',
+            createdAt: data.createdAt?.toDate?.() || new Date(),
+            updatedAt: data.updatedAt?.toDate?.() || new Date()
+          });
+        });
 
-      // return cvs;
+        console.log(`Found ${cvs.length} CVs in Firebase`);
+        // Sort by updatedAt in memory
+        cvs.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+        return cvs;
+
+      } catch (firebaseError) {
+        console.warn('Firebase query failed, trying localStorage:', firebaseError);
+
+        // Fallback to localStorage
+        const userCVs = this.getUserCVsFromStorage(userId);
+        const processedCVs = userCVs.map(cv => ({
+          ...cv,
+          source: 'localStorage',
+          createdAt: new Date(cv.createdAt),
+          updatedAt: new Date(cv.updatedAt)
+        }));
+
+        console.log(`Found ${processedCVs.length} CVs in localStorage`);
+        return processedCVs.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+      }
     } catch (error) {
       console.error('Error fetching CVs:', error);
       throw new Error('Failed to load CVs. Please try again.');
@@ -114,62 +186,115 @@ class CVService {
   // Delete CV for authenticated users
   async deleteCV(cvId, userId) {
     try {
-      // For now, delete from localStorage
-      // In production, uncomment the Firebase code below
-      const userCVs = this.getUserCVsFromStorage(userId);
-      const filteredCVs = userCVs.filter(cv => cv.id !== cvId);
-      localStorage.setItem(`userCVs_${userId}`, JSON.stringify(filteredCVs));
-      return true;
+      console.log('Deleting CV from Firebase:', cvId);
 
-      // TODO: Uncomment for real Firebase integration
-      // await deleteDoc(doc(db, this.collectionName, cvId));
-      // return true;
+      // Try Firebase first
+      try {
+        await deleteDoc(doc(db, this.collectionName, cvId));
+        console.log('CV deleted from Firebase successfully');
+        return true;
+      } catch (firebaseError) {
+        console.warn('Firebase delete failed, trying localStorage:', firebaseError);
+
+        // Fallback to localStorage
+        const userCVs = this.getUserCVsFromStorage(userId);
+        const filteredCVs = userCVs.filter(cv => cv.id !== cvId);
+        localStorage.setItem(`userCVs_${userId}`, JSON.stringify(filteredCVs));
+        console.log('CV deleted from localStorage successfully');
+        return true;
+      }
     } catch (error) {
       console.error('Error deleting CV:', error);
       throw new Error('Failed to delete CV. Please try again.');
     }
   }
 
-  // Save CV for guest users (localStorage)
-  saveGuestCV(cvData) {
+  // Save CV for guest users (Firebase + localStorage)
+  async saveGuestCV(cvData) {
     try {
-      const guestCVs = this.getGuestCVs();
+      console.log('Saving guest CV to Firebase');
+
+      const cvId = this.generateId();
       const cvWithMetadata = {
         ...cvData,
-        id: this.generateId(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        isGuest: true
+        id: cvId,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        isGuest: true,
+        guestId: this.getGuestId()
       };
 
-      guestCVs.push(cvWithMetadata);
-      localStorage.setItem('guestCVs', JSON.stringify(guestCVs));
+      // Try Firebase first
+      try {
+        const docRef = doc(db, this.guestCollectionName, cvId);
+        await setDoc(docRef, cvWithMetadata);
 
-      return cvWithMetadata;
+        console.log('Guest CV saved to Firebase successfully');
+        return { ...cvWithMetadata, id: cvId, source: 'firebase' };
+      } catch (firebaseError) {
+        console.warn('Firebase save failed, using localStorage:', firebaseError);
+
+        // Fallback to localStorage
+        const guestCVs = this.getGuestCVs();
+        const localCvData = {
+          ...cvData,
+          id: cvId,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          isGuest: true,
+          source: 'localStorage'
+        };
+
+        guestCVs.push(localCvData);
+        localStorage.setItem('guestCVs', JSON.stringify(guestCVs));
+
+        console.log('Guest CV saved to localStorage successfully');
+        return localCvData;
+      }
     } catch (error) {
       console.error('Error saving guest CV:', error);
-      throw new Error('Failed to save CV locally. Please check your browser storage.');
+      throw new Error('Failed to save CV. Please try again.');
     }
   }
 
   // Update guest CV
-  updateGuestCV(cvId, cvData) {
+  async updateGuestCV(cvId, cvData) {
     try {
-      const guestCVs = this.getGuestCVs();
-      const cvIndex = guestCVs.findIndex(cv => cv.id === cvId);
+      console.log('Updating guest CV:', cvId);
 
-      if (cvIndex === -1) {
-        throw new Error('CV not found');
+      // Try Firebase first
+      try {
+        const updatedData = {
+          ...cvData,
+          updatedAt: serverTimestamp()
+        };
+
+        const cvRef = doc(db, this.guestCollectionName, cvId);
+        await updateDoc(cvRef, updatedData);
+
+        console.log('Guest CV updated in Firebase successfully');
+        return { ...updatedData, id: cvId };
+      } catch (firebaseError) {
+        console.warn('Firebase update failed, trying localStorage:', firebaseError);
+
+        // Fallback to localStorage
+        const guestCVs = this.getGuestCVs();
+        const cvIndex = guestCVs.findIndex(cv => cv.id === cvId);
+
+        if (cvIndex === -1) {
+          throw new Error('CV not found');
+        }
+
+        guestCVs[cvIndex] = {
+          ...guestCVs[cvIndex],
+          ...cvData,
+          updatedAt: new Date().toISOString()
+        };
+
+        localStorage.setItem('guestCVs', JSON.stringify(guestCVs));
+        console.log('Guest CV updated in localStorage successfully');
+        return guestCVs[cvIndex];
       }
-
-      guestCVs[cvIndex] = {
-        ...guestCVs[cvIndex],
-        ...cvData,
-        updatedAt: new Date().toISOString()
-      };
-
-      localStorage.setItem('guestCVs', JSON.stringify(guestCVs));
-      return guestCVs[cvIndex];
     } catch (error) {
       console.error('Error updating guest CV:', error);
       throw new Error('Failed to update CV. Please try again.');
@@ -177,10 +302,53 @@ class CVService {
   }
 
   // Get all guest CVs
-  getGuestCVs() {
+  async getGuestCVs() {
     try {
-      const stored = localStorage.getItem('guestCVs');
-      return stored ? JSON.parse(stored) : [];
+      console.log('Getting guest CVs from Firebase');
+
+      // Try Firebase first
+      try {
+        const guestId = this.getGuestId();
+        const q = query(
+          collection(db, this.guestCollectionName),
+          where('guestId', '==', guestId)
+        );
+
+        const querySnapshot = await getDocs(q);
+        const cvs = [];
+
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          cvs.push({
+            ...data,
+            id: doc.id,
+            source: 'firebase',
+            createdAt: data.createdAt?.toDate?.() || new Date(),
+            updatedAt: data.updatedAt?.toDate?.() || new Date()
+          });
+        });
+
+        console.log(`Found ${cvs.length} guest CVs in Firebase`);
+        // Sort by updatedAt in memory
+        cvs.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+        return cvs;
+
+      } catch (firebaseError) {
+        console.warn('Firebase query failed, trying localStorage:', firebaseError);
+
+        // Fallback to localStorage
+        const stored = localStorage.getItem('guestCVs');
+        const localCVs = stored ? JSON.parse(stored) : [];
+        const processedCVs = localCVs.map(cv => ({
+          ...cv,
+          source: 'localStorage',
+          createdAt: new Date(cv.createdAt),
+          updatedAt: new Date(cv.updatedAt)
+        }));
+
+        console.log(`Found ${processedCVs.length} guest CVs in localStorage`);
+        return processedCVs.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+      }
     } catch (error) {
       console.error('Error loading guest CVs:', error);
       return [];
@@ -188,16 +356,40 @@ class CVService {
   }
 
   // Delete guest CV
-  deleteGuestCV(cvId) {
+  async deleteGuestCV(cvId) {
     try {
-      const guestCVs = this.getGuestCVs();
-      const filteredCVs = guestCVs.filter(cv => cv.id !== cvId);
-      localStorage.setItem('guestCVs', JSON.stringify(filteredCVs));
-      return true;
+      console.log('Deleting guest CV:', cvId);
+
+      // Try Firebase first
+      try {
+        await deleteDoc(doc(db, this.guestCollectionName, cvId));
+        console.log('Guest CV deleted from Firebase successfully');
+        return true;
+      } catch (firebaseError) {
+        console.warn('Firebase delete failed, trying localStorage:', firebaseError);
+
+        // Fallback to localStorage
+        const stored = localStorage.getItem('guestCVs');
+        const guestCVs = stored ? JSON.parse(stored) : [];
+        const filteredCVs = guestCVs.filter(cv => cv.id !== cvId);
+        localStorage.setItem('guestCVs', JSON.stringify(filteredCVs));
+        console.log('Guest CV deleted from localStorage successfully');
+        return true;
+      }
     } catch (error) {
       console.error('Error deleting guest CV:', error);
       throw new Error('Failed to delete CV. Please try again.');
     }
+  }
+
+  // Get or create guest ID
+  getGuestId() {
+    let guestId = localStorage.getItem('guestId');
+    if (!guestId) {
+      guestId = 'guest_' + this.generateId();
+      localStorage.setItem('guestId', guestId);
+    }
+    return guestId;
   }
 
   // Duplicate CV

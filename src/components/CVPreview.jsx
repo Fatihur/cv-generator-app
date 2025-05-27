@@ -10,7 +10,7 @@ const CVPreview = ({ isOpen, onClose, cvData, onExport }) => {
 
   if (!isOpen || !cvData) return null;
 
-  const { personal, experience = [], education = [], skills = [], template = 'modern' } = cvData;
+  const { personal, experience = [], education = [], skills = [], achievements = [], template = 'modern' } = cvData;
   const templateStyle = getTemplateStyle(template);
 
   const formatDate = (dateString) => {
@@ -306,8 +306,49 @@ const CVPreview = ({ isOpen, onClose, cvData, onExport }) => {
               </div>
             )}
 
+            {/* Achievements */}
+            {achievements.length > 0 && (
+              <div className="mb-8">
+                <h2 className="text-xl font-bold text-gray-900 mb-4 pb-1 border-b border-gray-300">
+                  Achievements & Awards
+                </h2>
+                <div className="space-y-4">
+                  {achievements.map((achievement, index) => (
+                    <div key={index} className="relative">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            {achievement.title || 'Achievement Title'}
+                          </h3>
+                          {achievement.organization && (
+                            <p className="text-gray-700 font-medium">
+                              {achievement.organization}
+                            </p>
+                          )}
+                        </div>
+                        {achievement.date && (
+                          <div className="text-sm text-gray-600">
+                            {formatDate(achievement.date)}
+                          </div>
+                        )}
+                      </div>
+                      {achievement.description && (
+                        <div className="text-gray-700 leading-relaxed">
+                          {achievement.description.split('\n').map((line, lineIndex) => (
+                            <p key={lineIndex} className="mb-1">
+                              {line}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Empty State */}
-            {!personal?.fullName && experience.length === 0 && education.length === 0 && skills.length === 0 && (
+            {!personal?.fullName && experience.length === 0 && education.length === 0 && skills.length === 0 && achievements.length === 0 && (
               <div className="text-center py-16">
                 <div className="text-gray-400 mb-4">
                   <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">

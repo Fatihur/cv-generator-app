@@ -4,6 +4,7 @@ import { Plus, FileText, Bot, Sparkles, TrendingUp, Users, Clock, Edit } from 'l
 import { useAuth } from '../contexts/AuthContext';
 import cvService from '../services/cvService';
 
+
 const Dashboard = () => {
   const { user, isGuestMode } = useAuth();
   const [recentCVs, setRecentCVs] = useState([]);
@@ -19,7 +20,7 @@ const Dashboard = () => {
       let cvs = [];
 
       if (isGuestMode) {
-        cvs = cvService.getGuestCVs();
+        cvs = await cvService.getGuestCVs();
       } else if (user) {
         cvs = await cvService.getUserCVs(user.uid);
       }
@@ -39,7 +40,7 @@ const Dashboard = () => {
       title: 'Create New CV',
       description: 'Start building your professional CV',
       icon: Plus,
-      to: '/create-cv',
+      to: '/dashboard/create-cv',
       color: 'bg-primary-600 hover:bg-primary-700',
       textColor: 'text-white'
     },
@@ -47,7 +48,7 @@ const Dashboard = () => {
       title: 'View Saved CVs',
       description: 'Access your previously created CVs',
       icon: FileText,
-      to: '/saved-cvs',
+      to: '/dashboard/saved-cvs',
       color: 'bg-green-600 hover:bg-green-700',
       textColor: 'text-white'
     },
@@ -55,7 +56,7 @@ const Dashboard = () => {
       title: 'AI Assistant',
       description: 'Get AI help for your CV content',
       icon: Bot,
-      to: '/ai-tools',
+      to: '/dashboard/ai-tools',
       color: 'bg-purple-600 hover:bg-purple-700',
       textColor: 'text-white'
     }
@@ -158,7 +159,7 @@ const Dashboard = () => {
           </h2>
           {recentCVs.length > 0 && (
             <Link
-              to="/saved-cvs"
+              to="/dashboard/saved-cvs"
               className="text-primary-600 hover:text-primary-700 text-sm font-medium"
             >
               View All
@@ -190,7 +191,7 @@ const Dashboard = () => {
                 </div>
                 <div className="flex items-center space-x-2">
                   <Link
-                    to="/create-cv"
+                    to="/dashboard/create-cv"
                     state={{ cvData: cv, cvId: cv.id }}
                     className="p-2 text-secondary-600 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                     title="Edit"
@@ -198,7 +199,7 @@ const Dashboard = () => {
                     <Edit className="w-4 h-4" />
                   </Link>
                   <Link
-                    to="/saved-cvs"
+                    to="/dashboard/saved-cvs"
                     className="p-2 text-secondary-600 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
                     title="View Details"
                   >
@@ -215,7 +216,7 @@ const Dashboard = () => {
               No recent activity. Start by creating your first CV!
             </p>
             <Link
-              to="/create-cv"
+              to="/dashboard/create-cv"
               className="btn-primary mt-4 inline-block"
             >
               Create Your First CV
@@ -223,6 +224,8 @@ const Dashboard = () => {
           </div>
         )}
       </div>
+
+
 
       {/* Tips Section */}
       <div className="card p-6 bg-gradient-to-r from-primary-50 to-purple-50 dark:from-primary-900/20 dark:to-purple-900/20 border-primary-200 dark:border-primary-800">

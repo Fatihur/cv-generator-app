@@ -39,7 +39,7 @@ const About = () => {
     <div className="space-y-12">
       {/* Back Button */}
       <div>
-        <BackButton to="/" label="Back to Dashboard" />
+        <BackButton to="/dashboard" label="Back to Dashboard" />
       </div>
 
       {/* Hero Section */}
@@ -51,7 +51,7 @@ const About = () => {
           About CV Generator
         </h1>
         <p className="text-xl text-secondary-600 dark:text-secondary-400 max-w-3xl mx-auto">
-          A modern, AI-powered CV generator that helps you create professional resumes 
+          A modern, AI-powered CV generator that helps you create professional resumes
           with ease. Built with cutting-edge technology and designed for the modern job seeker.
         </p>
       </div>
@@ -115,11 +115,11 @@ const About = () => {
             <span className="text-xl font-bold text-primary-600 dark:text-primary-400">Fatih</span>
           </div>
           <p className="text-secondary-600 dark:text-secondary-400 max-w-2xl mx-auto mb-6">
-            Passionate full-stack developer dedicated to creating tools that help people 
-            advance their careers. This CV generator combines modern web technologies 
+            Passionate full-stack developer dedicated to creating tools that help people
+            advance their careers. This CV generator combines modern web technologies
             with AI to provide the best user experience.
           </p>
-          
+
           {/* Social Links */}
           <div className="flex justify-center space-x-4">
             <a
@@ -154,9 +154,9 @@ const About = () => {
         </h2>
         <div className="max-w-3xl mx-auto text-center">
           <p className="text-lg text-secondary-700 dark:text-secondary-300 leading-relaxed mb-6">
-            We believe that everyone deserves a professional, well-crafted CV that showcases 
-            their skills and experience effectively. Our mission is to democratize access to 
-            professional CV creation tools by combining artificial intelligence with 
+            We believe that everyone deserves a professional, well-crafted CV that showcases
+            their skills and experience effectively. Our mission is to democratize access to
+            professional CV creation tools by combining artificial intelligence with
             user-friendly design.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">

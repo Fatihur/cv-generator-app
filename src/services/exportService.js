@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import { getTemplateStyle } from '../utils/templateStyles';
+import shareService from './shareService';
 
 class ExportService {
   // Export CV to PDF with multiple format options
@@ -450,61 +451,56 @@ class ExportService {
     return start && end ? `${start} - ${end}` : '';
   }
 
-  // Generate shareable link with short ID
-  generateShareableLink(cvData) {
+  // Generate shareable link using Firebase
+  async generateShareableLink(cvData) {
     try {
-      // Generate short ID for the CV
-      const shortId = this.generateShortId();
+      console.log('Generating Firebase share link for CV:', cvData);
 
-      // Store CV data in localStorage with short ID
-      const shareData = {
-        cvData,
-        createdAt: new Date().toISOString(),
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days
-      };
-
-      localStorage.setItem(`shared_cv_${shortId}`, JSON.stringify(shareData));
-
-      const baseUrl = window.location.origin;
-      const shareUrl = `${baseUrl}/shared/${shortId}`;
+      // Use Firebase share service
+      const shareUrl = await shareService.createShare(cvData);
+      console.log('Generated Firebase share URL:', shareUrl);
 
       return shareUrl;
     } catch (error) {
       console.error('Error generating shareable link:', error);
-      throw new Error('Failed to generate shareable link.');
+      throw new Error('Failed to generate shareable link. Please try again.');
     }
   }
 
-  // Generate short ID for sharing
-  generateShortId() {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-    for (let i = 0; i < 8; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return result;
-  }
-
-  // Get shared CV data by ID
-  getSharedCV(shareId) {
+  // Get shared CV data by ID (using Firebase)
+  async getSharedCV(shareId) {
     try {
-      const stored = localStorage.getItem(`shared_cv_${shareId}`);
-      if (!stored) {
-        throw new Error('Shared CV not found or expired');
-      }
+      console.log('Getting shared CV from Firebase with ID:', shareId);
 
-      const shareData = JSON.parse(stored);
-
-      // Check if expired
-      if (new Date() > new Date(shareData.expiresAt)) {
-        localStorage.removeItem(`shared_cv_${shareId}`);
-        throw new Error('Shared CV has expired');
+      const shareData = await shareService.getShare(shareId);
+      if (!shareData) {
+        throw new Error('Shared CV not found. The link may be invalid or the CV may have been removed.');
       }
 
       return shareData.cvData;
     } catch (error) {
       console.error('Error getting shared CV:', error);
-      throw new Error('Failed to load shared CV');
+      throw error;
+    }
+  }
+
+  // Get all shared CVs (using Firebase)
+  async getAllSharedCVs() {
+    try {
+      return await shareService.getAllShares();
+    } catch (error) {
+      console.error('Error getting all shared CVs:', error);
+      return [];
+    }
+  }
+
+  // Cleanup expired shared CVs (using Firebase)
+  async cleanupExpiredShares() {
+    try {
+      return await shareService.cleanupExpiredShares();
+    } catch (error) {
+      console.error('Error during cleanup:', error);
+      return 0;
     }
   }
 
@@ -596,6 +592,8 @@ class ExportService {
     // Ensure we have a valid filename
     return sanitized || 'CV';
   }
+
+
 }
 
 export default new ExportService();

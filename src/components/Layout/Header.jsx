@@ -12,7 +12,7 @@ const Header = () => {
     <header className="bg-white dark:bg-secondary-800 border-b border-secondary-200 dark:border-secondary-700 sticky top-0 z-50">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between max-w-7xl">
         <div className="flex items-center space-x-6">
-          <Link to="/" className="flex items-center space-x-3">
+          <Link to="/dashboard" className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">CV</span>
             </div>
@@ -23,7 +23,7 @@ const Header = () => {
 
           {/* About Link */}
           <Link
-            to="/about"
+            to="/dashboard/about"
             className="hidden md:flex items-center space-x-2 text-secondary-600 dark:text-secondary-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
           >
             <Info className="w-4 h-4" />
