@@ -76,6 +76,8 @@ const Login = () => {
         {/* Left Side - Hero Section */}
         <div className={`hidden lg:flex lg:w-1/2 flex-col justify-center items-center p-12 text-white relative transform transition-all duration-1000 ${isVisible ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'}`}>
           <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700"></div>
+
+          {/* Main Content */}
           <div className="relative z-10 max-w-md text-center">
             {/* Animated Logo */}
             <div className="mb-8 relative">
@@ -91,7 +93,7 @@ const Login = () => {
               CV Generator Pro
             </h1>
             <p className="text-xl text-blue-100 mb-8 leading-relaxed">
-              Create stunning professional CVs with AI assistance and beautiful templates
+              Create stunning professional CVs with AI assistance and smart formatting
             </p>
 
             {/* Features */}
@@ -106,7 +108,7 @@ const Login = () => {
                 <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
                   <Star className="w-4 h-4" />
                 </div>
-                <span>Professional templates</span>
+                <span>Professional formatting</span>
               </div>
               <div className="flex items-center space-x-3 text-blue-100">
                 <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
@@ -116,6 +118,7 @@ const Login = () => {
               </div>
             </div>
           </div>
+
         </div>
 
         {/* Right Side - Login Form */}
@@ -276,6 +279,16 @@ const Login = () => {
                   >
                     Create one now
                   </Link>
+                </p>
+              </div>
+
+              {/* Footer */}
+              <div className="mt-8 text-center">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Made with ❤️ by{' '}
+                  <span className="font-semibold text-blue-600 dark:text-blue-400">
+                    Fatih
+                  </span>
                 </p>
               </div>
             </div>

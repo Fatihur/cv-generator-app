@@ -8,7 +8,7 @@ const ForgotPassword = () => {
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const { resetPassword } = useAuth();
-  
+
   const {
     register,
     handleSubmit,
@@ -41,7 +41,7 @@ const ForgotPassword = () => {
             <h1 className="text-2xl font-bold text-secondary-900 dark:text-white mb-4">
               Check Your Email
             </h1>
-            
+
             <p className="text-secondary-600 dark:text-secondary-400 mb-6">
               We've sent a password reset link to <strong>{getValues('email')}</strong>
             </p>
@@ -57,7 +57,7 @@ const ForgotPassword = () => {
               >
                 Try Different Email
               </button>
-              
+
               <Link
                 to="/login"
                 className="btn-primary w-full inline-block text-center"
@@ -144,6 +144,16 @@ const ForgotPassword = () => {
               >
                 Sign in
               </Link>
+            </p>
+          </div>
+
+          {/* Footer */}
+          <div className="mt-8 text-center">
+            <p className="text-sm text-secondary-500 dark:text-secondary-400">
+              Made with ❤️ by{' '}
+              <span className="font-semibold text-primary-600 dark:text-primary-400">
+                Fatih
+              </span>
             </p>
           </div>
         </div>

@@ -75,8 +75,8 @@ const Dashboard = () => {
     },
     {
       icon: Users,
-      title: 'Multiple Templates',
-      description: 'Choose from various professional CV templates'
+      title: 'Smart Formatting',
+      description: 'Professional layout with intelligent content organization'
     }
   ];
 

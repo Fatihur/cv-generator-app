@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { X, Download, Share, Mail, Phone, MapPin, Globe, Copy, MessageCircle, Linkedin } from 'lucide-react';
+import { useState } from 'react';
+import { X, Download, Share, Mail, Phone, MapPin, Globe, Copy, MessageCircle, ExternalLink } from 'lucide-react';
 import exportService from '../services/exportService';
-import { getTemplateStyle, generateTemplateCSS } from '../utils/templateStyles';
+
 import toast from 'react-hot-toast';
 
 const CVPreview = ({ isOpen, onClose, cvData, onExport }) => {
@@ -10,8 +10,7 @@ const CVPreview = ({ isOpen, onClose, cvData, onExport }) => {
 
   if (!isOpen || !cvData) return null;
 
-  const { personal, experience = [], education = [], skills = [], achievements = [], template = 'modern' } = cvData;
-  const templateStyle = getTemplateStyle(template);
+  const { personal, experience = [], education = [], skills = [], achievements = [], certificates = [] } = cvData;
 
   const formatDate = (dateString) => {
     if (!dateString) return '';
@@ -30,7 +29,8 @@ const CVPreview = ({ isOpen, onClose, cvData, onExport }) => {
     try {
       const filename = cvData?.cvName ||
         personal?.fullName?.replace(/\s+/g, '_') || 'CV';
-      await exportService.exportToPDF(cvData, filename);
+      // Use text-based PDF export for better compatibility
+      await exportService.exportToPDF(cvData, filename, 'standard');
       toast.success('CV exported to PDF successfully!');
     } catch (error) {
       toast.error(error.message || 'Failed to export PDF');
@@ -138,7 +138,7 @@ const CVPreview = ({ isOpen, onClose, cvData, onExport }) => {
                       onClick={() => handleShare('linkedin')}
                       className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
                     >
-                      <Linkedin className="w-4 h-4" />
+                      <ExternalLink className="w-4 h-4" />
                       <span>Share via LinkedIn</span>
                     </button>
                     {navigator.share && (
@@ -165,8 +165,144 @@ const CVPreview = ({ isOpen, onClose, cvData, onExport }) => {
         </div>
 
         {/* CV Content */}
-        <div className="flex-1 overflow-y-auto p-8 bg-white">
-          <style>{generateTemplateCSS(template)}</style>
+        <div className="flex-1 overflow-y-auto bg-white">
+          <style>
+            {`
+            .cv-container {
+              padding: 2rem;
+              max-width: none;
+              margin: 0;
+              font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+              line-height: 1.6;
+              color: #374151;
+            }
+            .cv-header {
+              margin-bottom: 2rem;
+              padding-bottom: 1.5rem;
+              border-bottom: 3px solid #e5e7eb;
+              text-align: center;
+            }
+            .cv-name {
+              font-size: 2.8rem;
+              font-weight: 700;
+              color: #111827;
+              margin: 0 0 1rem 0;
+              letter-spacing: -0.025em;
+            }
+            .cv-contact {
+              display: flex;
+              justify-content: center;
+              flex-wrap: wrap;
+              gap: 2rem;
+              color: #6b7280;
+              font-size: 0.95rem;
+            }
+            .contact-item {
+              display: flex;
+              align-items: center;
+              gap: 0.5rem;
+            }
+            .cv-section {
+              margin-bottom: 2.5rem;
+            }
+            .cv-section-title {
+              font-size: 1.4rem;
+              font-weight: 700;
+              color: #111827;
+              margin: 0 0 1.5rem 0;
+              padding-bottom: 0.5rem;
+              border-bottom: 2px solid #e5e7eb;
+              text-transform: uppercase;
+              letter-spacing: 0.05em;
+            }
+            .cv-item-table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 1.5rem;
+              table-layout: fixed;
+            }
+            .cv-item-table:last-child {
+              margin-bottom: 0;
+            }
+            .cv-item-row {
+              border-bottom: 1px solid #f3f4f6;
+            }
+            .cv-item-row:last-child {
+              border-bottom: none;
+            }
+            .cv-item-header {
+              padding: 1rem 0;
+              vertical-align: top;
+            }
+            .cv-item-left {
+              width: 70%;
+              padding-right: 2rem;
+              vertical-align: top;
+            }
+            .cv-item-right {
+              width: 30%;
+              text-align: right;
+              vertical-align: top;
+              padding-left: 1rem;
+            }
+            .cv-item-title {
+              font-size: 1.2rem;
+              font-weight: 600;
+              color: #111827;
+              margin: 0 0 0.25rem 0;
+            }
+            .cv-item-subtitle {
+              font-size: 1rem;
+              font-weight: 500;
+              color: #4b5563;
+              margin: 0 0 0.75rem 0;
+            }
+            .cv-item-date {
+              font-size: 0.9rem;
+              color: #6b7280;
+              font-weight: 600;
+              white-space: nowrap;
+              text-align: right;
+              display: block;
+            }
+            .cv-item-description {
+              color: #374151;
+              line-height: 1.6;
+              margin-top: 0.5rem;
+            }
+            .cv-skills-grid {
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+              gap: 1rem;
+            }
+            .cv-skill {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              padding: 1rem;
+              background: #f8fafc;
+              border: 1px solid #e2e8f0;
+              border-radius: 0.5rem;
+              transition: all 0.2s ease;
+            }
+            .cv-skill:hover {
+              background: #f1f5f9;
+              border-color: #cbd5e1;
+            }
+            .cv-skill-name {
+              font-weight: 600;
+              color: #1e293b;
+            }
+            .cv-skill-level {
+              font-size: 0.85rem;
+              color: #64748b;
+              background: #e2e8f0;
+              padding: 0.25rem 0.75rem;
+              border-radius: 1rem;
+              font-weight: 500;
+            }
+            `}
+          </style>
           <div className="cv-container">
             {/* Header Section */}
             <div className="cv-header">
@@ -174,34 +310,27 @@ const CVPreview = ({ isOpen, onClose, cvData, onExport }) => {
                 {personal?.fullName || 'Your Name'}
               </h1>
 
-              <div className="cv-contact"
-                style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  justifyContent: templateStyle.layout.headerStyle === 'center' ? 'center' : 'flex-start',
-                  alignItems: 'center',
-                  gap: '1rem'
-                }}>
+              <div className="cv-contact">
                 {personal?.email && (
-                  <div className="flex items-center space-x-1">
+                  <div className="contact-item">
                     <Mail className="w-4 h-4" />
                     <span>{personal.email}</span>
                   </div>
                 )}
                 {personal?.phone && (
-                  <div className="flex items-center space-x-1">
+                  <div className="contact-item">
                     <Phone className="w-4 h-4" />
                     <span>{personal.phone}</span>
                   </div>
                 )}
                 {personal?.location && (
-                  <div className="flex items-center space-x-1">
+                  <div className="contact-item">
                     <MapPin className="w-4 h-4" />
                     <span>{personal.location}</span>
                   </div>
                 )}
                 {personal?.website && (
-                  <div className="flex items-center space-x-1">
+                  <div className="contact-item">
                     <Globe className="w-4 h-4" />
                     <span>{personal.website}</span>
                   </div>
@@ -211,11 +340,11 @@ const CVPreview = ({ isOpen, onClose, cvData, onExport }) => {
 
             {/* Professional Summary */}
             {personal?.summary && (
-              <div className="mb-8">
-                <h2 className="text-xl font-bold text-gray-900 mb-3 pb-1 border-b border-gray-300">
+              <div className="cv-section">
+                <h2 className="cv-section-title">
                   Professional Summary
                 </h2>
-                <p className="text-gray-700 leading-relaxed">
+                <p style={{ lineHeight: '1.6' }}>
                   {personal.summary}
                 </p>
               </div>
@@ -223,81 +352,87 @@ const CVPreview = ({ isOpen, onClose, cvData, onExport }) => {
 
             {/* Work Experience */}
             {experience.length > 0 && (
-              <div className="mb-8">
-                <h2 className="text-xl font-bold text-gray-900 mb-4 pb-1 border-b border-gray-300">
+              <div className="cv-section">
+                <h2 className="cv-section-title">
                   Work Experience
                 </h2>
-                <div className="space-y-6">
-                  {experience.map((exp, index) => (
-                    <div key={index} className="relative">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-900">
+                {experience.map((exp, index) => (
+                  <table key={index} className="cv-item-table">
+                    <tbody>
+                      <tr className="cv-item-row">
+                        <td className="cv-item-header cv-item-left">
+                          <h3 className="cv-item-title">
                             {exp.position || 'Position Title'}
                           </h3>
-                          <p className="text-gray-700 font-medium">
+                          <p className="cv-item-subtitle">
                             {exp.company || 'Company Name'}
                           </p>
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          {formatDateRange(exp.startDate, exp.endDate, exp.current)}
-                        </div>
-                      </div>
-                      {exp.description && (
-                        <div className="text-gray-700 leading-relaxed">
-                          {exp.description.split('\n').map((line, lineIndex) => (
-                            <p key={lineIndex} className="mb-1">
-                              {line}
-                            </p>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                          {exp.description && (
+                            <div className="cv-item-description">
+                              {exp.description.split('\n').map((line, lineIndex) => (
+                                <p key={lineIndex} style={{ margin: '0.25rem 0' }}>
+                                  {line}
+                                </p>
+                              ))}
+                            </div>
+                          )}
+                        </td>
+                        <td className="cv-item-header cv-item-right">
+                          <div className="cv-item-date">
+                            {formatDateRange(exp.startDate, exp.endDate, exp.current)}
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                ))}
               </div>
             )}
 
             {/* Education */}
             {education.length > 0 && (
-              <div className="mb-8">
-                <h2 className="text-xl font-bold text-gray-900 mb-4 pb-1 border-b border-gray-300">
+              <div className="cv-section">
+                <h2 className="cv-section-title">
                   Education
                 </h2>
-                <div className="space-y-4">
-                  {education.map((edu, index) => (
-                    <div key={index} className="flex justify-between items-start">
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          {edu.degree || 'Degree'}
-                          {edu.field && ` in ${edu.field}`}
-                        </h3>
-                        <p className="text-gray-700">
-                          {edu.institution || 'Institution Name'}
-                        </p>
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        {edu.graduationYear || formatDateRange(edu.startDate, edu.endDate, edu.current)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                {education.map((edu, index) => (
+                  <table key={index} className="cv-item-table">
+                    <tbody>
+                      <tr className="cv-item-row">
+                        <td className="cv-item-header cv-item-left">
+                          <h3 className="cv-item-title">
+                            {edu.degree || 'Degree'}
+                            {edu.field && ` in ${edu.field}`}
+                          </h3>
+                          <p className="cv-item-subtitle">
+                            {edu.institution || 'Institution Name'}
+                          </p>
+                        </td>
+                        <td className="cv-item-header cv-item-right">
+                          <div className="cv-item-date">
+                            {edu.graduationYear || formatDateRange(edu.startDate, edu.endDate, edu.current)}
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                ))}
               </div>
             )}
 
             {/* Skills */}
             {skills.length > 0 && (
-              <div className="mb-8">
-                <h2 className="text-xl font-bold text-gray-900 mb-4 pb-1 border-b border-gray-300">
+              <div className="cv-section">
+                <h2 className="cv-section-title">
                   Skills
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="cv-skills-grid">
                   {skills.map((skill, index) => (
-                    <div key={index} className="flex justify-between items-center">
-                      <span className="text-gray-900 font-medium">
+                    <div key={index} className="cv-skill">
+                      <span className="cv-skill-name">
                         {skill.name || 'Skill Name'}
                       </span>
-                      <span className="text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                      <span className="cv-skill-level">
                         {skill.level || 'Intermediate'}
                       </span>
                     </div>
@@ -308,47 +443,105 @@ const CVPreview = ({ isOpen, onClose, cvData, onExport }) => {
 
             {/* Achievements */}
             {achievements.length > 0 && (
-              <div className="mb-8">
-                <h2 className="text-xl font-bold text-gray-900 mb-4 pb-1 border-b border-gray-300">
+              <div className="cv-section">
+                <h2 className="cv-section-title">
                   Achievements & Awards
                 </h2>
-                <div className="space-y-4">
-                  {achievements.map((achievement, index) => (
-                    <div key={index} className="relative">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-900">
+                {achievements.map((achievement, index) => (
+                  <table key={index} className="cv-item-table">
+                    <tbody>
+                      <tr className="cv-item-row">
+                        <td className="cv-item-header cv-item-left">
+                          <h3 className="cv-item-title">
                             {achievement.title || 'Achievement Title'}
                           </h3>
                           {achievement.organization && (
-                            <p className="text-gray-700 font-medium">
+                            <p className="cv-item-subtitle">
                               {achievement.organization}
                             </p>
                           )}
-                        </div>
-                        {achievement.date && (
-                          <div className="text-sm text-gray-600">
-                            {formatDate(achievement.date)}
-                          </div>
-                        )}
-                      </div>
-                      {achievement.description && (
-                        <div className="text-gray-700 leading-relaxed">
-                          {achievement.description.split('\n').map((line, lineIndex) => (
-                            <p key={lineIndex} className="mb-1">
-                              {line}
+                          {achievement.description && (
+                            <div className="cv-item-description">
+                              {achievement.description.split('\n').map((line, lineIndex) => (
+                                <p key={lineIndex} style={{ margin: '0.25rem 0' }}>
+                                  {line}
+                                </p>
+                              ))}
+                            </div>
+                          )}
+                        </td>
+                        <td className="cv-item-header cv-item-right">
+                          {achievement.date && (
+                            <div className="cv-item-date">
+                              {formatDate(achievement.date)}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                ))}
+              </div>
+            )}
+
+            {/* Certificates */}
+            {certificates.length > 0 && (
+              <div className="cv-section">
+                <h2 className="cv-section-title">
+                  Certificates & Licenses
+                </h2>
+                {certificates.map((certificate, index) => (
+                  <table key={index} className="cv-item-table">
+                    <tbody>
+                      <tr className="cv-item-row">
+                        <td className="cv-item-header cv-item-left">
+                          <h3 className="cv-item-title">
+                            {certificate.name || 'Certificate Name'}
+                          </h3>
+                          {certificate.issuer && (
+                            <p className="cv-item-subtitle">
+                              {certificate.issuer}
                             </p>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                          )}
+                          <div className="cv-item-description">
+                            {certificate.credentialId && (
+                              <p style={{ margin: '0.25rem 0', fontSize: '0.875rem', color: '#666' }}>
+                                ID: {certificate.credentialId}
+                              </p>
+                            )}
+                            {certificate.url && (
+                              <p style={{ margin: '0.25rem 0' }}>
+                                <a
+                                  href={certificate.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:underline text-sm"
+                                >
+                                  View Certificate
+                                </a>
+                              </p>
+                            )}
+                          </div>
+                        </td>
+                        <td className="cv-item-header cv-item-right">
+                          <div className="cv-item-date">
+                            {certificate.date && (
+                              <div>Issued: {formatDate(certificate.date)}</div>
+                            )}
+                            {certificate.expiryDate && (
+                              <div>Expires: {formatDate(certificate.expiryDate)}</div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                ))}
               </div>
             )}
 
             {/* Empty State */}
-            {!personal?.fullName && experience.length === 0 && education.length === 0 && skills.length === 0 && achievements.length === 0 && (
+            {!personal?.fullName && experience.length === 0 && education.length === 0 && skills.length === 0 && achievements.length === 0 && certificates.length === 0 && (
               <div className="text-center py-16">
                 <div className="text-gray-400 mb-4">
                   <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">

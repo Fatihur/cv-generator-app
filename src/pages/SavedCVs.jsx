@@ -134,7 +134,8 @@ const SavedCVs = () => {
       if (type === 'pdf') {
         const filename = selectedCV.cvName ||
           selectedCV.personal?.fullName?.replace(/\s+/g, '_') || 'CV';
-        await exportService.exportToPDF(selectedCV, filename);
+        // Use image-based PDF export for better template support
+        await exportService.exportToPDFAsImage(selectedCV, filename);
         toast.success('CV exported to PDF successfully!');
       } else if (type === 'share') {
         const shareUrl = exportService.generateShareableLink(selectedCV);

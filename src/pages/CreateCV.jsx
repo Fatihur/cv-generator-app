@@ -1,21 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { Save, Eye, Bot, Plus, Trash2 } from 'lucide-react';
+import { Save, Eye, Bot, Plus, Trash2, Download } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import AIModal from '../components/AIModal';
 import CVPreview from '../components/CVPreview';
 import BackButton from '../components/BackButton';
-import TemplateSelector from '../components/TemplateSelector';
+
 import cvService from '../services/cvService';
 import exportService from '../services/exportService';
 import toast from 'react-hot-toast';
 
 const CreateCV = () => {
-  const [activeSection, setActiveSection] = useState('template');
+  const [activeSection, setActiveSection] = useState('personal');
   const [loading, setSaving] = useState(false);
   const [showAIModal, setShowAIModal] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
   const [aiModalType, setAiModalType] = useState('improve');
   const [aiModalField, setAiModalField] = useState('');
   const [aiModalInitialText, setAiModalInitialText] = useState('');
@@ -26,7 +27,10 @@ const CreateCV = () => {
   // Check if we're editing an existing CV
   const [isEditing, setIsEditing] = useState(false);
   const [editingCVId, setEditingCVId] = useState(null);
+
+  // Template selection state
   const [selectedTemplate, setSelectedTemplate] = useState('modern');
+
 
   const {
     register,
@@ -48,17 +52,18 @@ const CreateCV = () => {
       experience: [],
       education: [],
       skills: [],
-      achievements: []
+      achievements: [],
+      certificates: []
     }
   });
 
   const sections = [
-    { id: 'template', label: 'Template', icon: '🎨' },
     { id: 'personal', label: 'Personal Info', icon: '👤' },
     { id: 'experience', label: 'Experience', icon: '💼' },
     { id: 'education', label: 'Education', icon: '🎓' },
     { id: 'skills', label: 'Skills', icon: '⚡' },
-    { id: 'achievements', label: 'Achievements', icon: '🏆' }
+    { id: 'achievements', label: 'Achievements', icon: '🏆' },
+    { id: 'certificates', label: 'Certificates', icon: '📜' }
   ];
 
   const watchedData = watch();
@@ -143,6 +148,23 @@ const CreateCV = () => {
     setValue('achievements', currentAchievements.filter((_, i) => i !== index));
   };
 
+  const addCertificate = () => {
+    const currentCertificates = watchedData.certificates || [];
+    setValue('certificates', [...currentCertificates, {
+      name: '',
+      issuer: '',
+      date: '',
+      expiryDate: '',
+      credentialId: '',
+      url: ''
+    }]);
+  };
+
+  const removeCertificate = (index) => {
+    const currentCertificates = watchedData.certificates || [];
+    setValue('certificates', currentCertificates.filter((_, i) => i !== index));
+  };
+
   const onSubmit = async (data) => {
     setSaving(true);
     try {
@@ -212,11 +234,21 @@ const CreateCV = () => {
 
   const handleExport = async (type) => {
     try {
+      const filename = watchedData.cvName ||
+        watchedData.personal?.fullName?.replace(/\s+/g, '_') || 'CV';
+
       if (type === 'pdf') {
-        const filename = watchedData.cvName ||
-          watchedData.personal?.fullName?.replace(/\s+/g, '_') || 'CV';
-        await exportService.exportToPDF(watchedData, filename);
+        await exportService.exportToPDF(watchedData, filename, 'standard');
         toast.success('CV exported to PDF successfully!');
+      } else if (type === 'pdf-compact') {
+        await exportService.exportToPDF(watchedData, filename, 'compact');
+        toast.success('Compact CV exported to PDF successfully!');
+      } else if (type === 'pdf-detailed') {
+        await exportService.exportToPDF(watchedData, filename, 'detailed');
+        toast.success('Detailed CV exported to PDF successfully!');
+      } else if (type === 'pdf-image') {
+        await exportService.exportToPDFAsImage(watchedData, filename);
+        toast.success('Visual CV exported to PDF successfully!');
       } else if (type === 'share') {
         const shareUrl = exportService.generateShareableLink(watchedData);
         await exportService.copyToClipboard(shareUrl);
@@ -227,49 +259,31 @@ const CreateCV = () => {
     }
   };
 
-  const renderTemplate = () => (
-    <div className="space-y-6">
-      {/* CV Name */}
-      <div>
-        <h3 className="text-lg font-semibold text-secondary-900 dark:text-white mb-4">
-          CV Information
-        </h3>
-        <div>
-          <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
-            CV Name *
-          </label>
-          <input
-            {...register('cvName', { required: 'CV name is required' })}
-            className="input-field"
-            placeholder="e.g., Software Engineer Resume, Marketing Manager CV"
-          />
-          {errors.cvName && (
-            <p className="text-red-500 text-sm mt-1">{errors.cvName.message}</p>
-          )}
-          <p className="text-xs text-secondary-500 dark:text-secondary-400 mt-1">
-            This will be used as the filename when downloading your CV
-          </p>
-        </div>
-      </div>
 
-      {/* Template Selection */}
-      <div>
-        <h3 className="text-lg font-semibold text-secondary-900 dark:text-white mb-4">
-          Choose Template
-        </h3>
-        <TemplateSelector
-          selectedTemplate={selectedTemplate}
-          onTemplateChange={setSelectedTemplate}
-        />
-      </div>
-    </div>
-  );
 
   const renderPersonalInfo = () => (
     <div className="space-y-6">
       <h3 className="text-lg font-semibold text-secondary-900 dark:text-white">
         Personal Information
       </h3>
+
+      {/* CV Name */}
+      <div>
+        <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
+          CV Name *
+        </label>
+        <input
+          {...register('cvName', { required: 'CV name is required' })}
+          className="input-field"
+          placeholder="e.g., Software Engineer Resume, Marketing Manager CV"
+        />
+        {errors.cvName && (
+          <p className="text-red-500 text-sm mt-1">{errors.cvName.message}</p>
+        )}
+        <p className="text-xs text-secondary-500 dark:text-secondary-400 mt-1">
+          This will be used as the filename when downloading your CV
+        </p>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
@@ -718,10 +732,113 @@ const CreateCV = () => {
     </div>
   );
 
+  const renderCertificates = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-secondary-900 dark:text-white">
+          Certificates & Licenses
+        </h3>
+        <button
+          type="button"
+          onClick={addCertificate}
+          className="btn-primary flex items-center space-x-2"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Add Certificate</span>
+        </button>
+      </div>
+
+      {(watchedData.certificates || []).map((certificate, index) => (
+        <div key={index} className="card p-6 relative">
+          <button
+            type="button"
+            onClick={() => removeCertificate(index)}
+            className="absolute top-4 right-4 text-red-500 hover:text-red-700"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
+                Certificate Name *
+              </label>
+              <input
+                {...register(`certificates.${index}.name`, { required: 'Certificate name is required' })}
+                className="input-field"
+                placeholder="e.g., AWS Certified Solutions Architect"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
+                Issuing Organization *
+              </label>
+              <input
+                {...register(`certificates.${index}.issuer`, { required: 'Issuer is required' })}
+                className="input-field"
+                placeholder="e.g., Amazon Web Services"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
+                Issue Date
+              </label>
+              <input
+                type="month"
+                {...register(`certificates.${index}.date`)}
+                className="input-field"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
+                Expiry Date
+              </label>
+              <input
+                type="month"
+                {...register(`certificates.${index}.expiryDate`)}
+                className="input-field"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
+                Credential ID
+              </label>
+              <input
+                {...register(`certificates.${index}.credentialId`)}
+                className="input-field"
+                placeholder="Certificate ID or number"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
+                Credential URL
+              </label>
+              <input
+                type="url"
+                {...register(`certificates.${index}.url`)}
+                className="input-field"
+                placeholder="https://..."
+              />
+            </div>
+          </div>
+        </div>
+      ))}
+
+      {(!watchedData.certificates || watchedData.certificates.length === 0) && (
+        <div className="text-center py-8 text-secondary-500 dark:text-secondary-400">
+          No certificates added yet. Click "Add Certificate" to get started.
+        </div>
+      )}
+    </div>
+  );
+
   const renderCurrentSection = () => {
     switch (activeSection) {
-      case 'template':
-        return renderTemplate();
       case 'personal':
         return renderPersonalInfo();
       case 'experience':
@@ -732,8 +849,10 @@ const CreateCV = () => {
         return renderSkills();
       case 'achievements':
         return renderAchievements();
+      case 'certificates':
+        return renderCertificates();
       default:
-        return renderTemplate();
+        return renderPersonalInfo();
     }
   };
 
@@ -756,6 +875,55 @@ const CreateCV = () => {
             <Eye className="w-4 h-4" />
             <span>Preview</span>
           </button>
+
+          {/* Export Dropdown */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              className="btn-secondary flex items-center space-x-2"
+            >
+              <Download className="w-4 h-4" />
+              <span>Export</span>
+            </button>
+
+            {showExportMenu && (
+              <div className="absolute top-full right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 min-w-48">
+                <div className="py-2">
+                  <button
+                    onClick={() => { handleExport('pdf'); setShowExportMenu(false); }}
+                    className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>PDF Standard</span>
+                  </button>
+                  <button
+                    onClick={() => { handleExport('pdf-compact'); setShowExportMenu(false); }}
+                    className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>PDF Compact</span>
+                  </button>
+                  <button
+                    onClick={() => { handleExport('pdf-detailed'); setShowExportMenu(false); }}
+                    className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>PDF Detailed</span>
+                  </button>
+                  <div className="border-t border-gray-200 dark:border-gray-600 my-1"></div>
+                  <button
+                    onClick={() => { handleExport('pdf-image'); setShowExportMenu(false); }}
+                    className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>PDF Visual (with icons)</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
           <button
             onClick={handleSubmit(onSubmit)}
             disabled={loading}

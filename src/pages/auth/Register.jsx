@@ -73,6 +73,8 @@ const Register = () => {
       <div className="relative min-h-screen flex">
         <div className={`hidden lg:flex lg:w-1/2 flex-col justify-center items-center p-12 text-white relative transform transition-all duration-1000 ${isVisible ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'}`}>
           <div className="absolute inset-0 bg-gradient-to-br from-green-600 via-blue-600 to-purple-700"></div>
+
+          {/* Main Content */}
           <div className="relative z-10 max-w-md text-center">
             <div className="mb-8 relative">
               <div className="w-24 h-24 bg-white/20 backdrop-blur-sm rounded-3xl flex items-center justify-center mx-auto mb-6 transform hover:scale-110 transition-transform duration-300">
@@ -101,7 +103,7 @@ const Register = () => {
                 <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
                   <Star className="w-4 h-4" />
                 </div>
-                <span>Multiple professional templates</span>
+                <span>Smart AI content suggestions</span>
               </div>
               <div className="flex items-center space-x-3 text-green-100">
                 <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
@@ -111,6 +113,7 @@ const Register = () => {
               </div>
             </div>
           </div>
+
         </div>
 
         <div className={`w-full lg:w-1/2 flex items-center justify-center p-4 lg:p-12 transform transition-all duration-1000 delay-300 ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}>
@@ -297,6 +300,16 @@ const Register = () => {
                   >
                     Sign in here
                   </Link>
+                </p>
+              </div>
+
+              {/* Footer */}
+              <div className="mt-8 text-center">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Made with ❤️ by{' '}
+                  <span className="font-semibold text-green-600 dark:text-green-400">
+                    Fatih
+                  </span>
                 </p>
               </div>
             </div>

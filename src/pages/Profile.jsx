@@ -1,8 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { User, Mail, Phone, MapPin, Camera, Save, Shield, Bell, Palette } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import BackButton from '../components/BackButton';
+import ChangePasswordModal from '../components/ChangePasswordModal';
+import TwoFactorModal from '../components/TwoFactorModal';
+import SessionsModal from '../components/SessionsModal';
+import ToggleSwitch from '../components/ToggleSwitch';
+import profileService from '../services/profileService';
+import notificationService from '../services/notificationService';
 import toast from 'react-hot-toast';
 
 const Profile = () => {
@@ -10,21 +16,85 @@ const Profile = () => {
   const { isDarkMode, toggleTheme } = useTheme();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
+  const fileInputRef = useRef(null);
+
+  // Modal states
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showTwoFactor, setShowTwoFactor] = useState(false);
+  const [showSessions, setShowSessions] = useState(false);
+
+  // Security states
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
 
   const [profileData, setProfileData] = useState({
     displayName: user?.displayName || '',
     email: user?.email || '',
     phone: '',
     location: '',
-    bio: ''
+    bio: '',
+    photoURL: user?.photoURL || ''
   });
 
   const [preferences, setPreferences] = useState({
     emailNotifications: true,
-    pushNotifications: false,
-    marketingEmails: false,
     darkMode: isDarkMode
   });
+
+  // Load user data on component mount
+  useEffect(() => {
+    if (user) {
+      if (!isGuestMode) {
+        loadUserProfile();
+        loadUserPreferences();
+        load2FAStatus();
+      } else {
+        // For guest mode, just load default preferences
+        loadUserPreferences();
+      }
+    }
+  }, [user, isGuestMode]);
+
+  // Sync preferences with theme context
+  useEffect(() => {
+    setPreferences(prev => ({
+      ...prev,
+      darkMode: isDarkMode
+    }));
+  }, [isDarkMode]);
+
+  const loadUserProfile = async () => {
+    try {
+      const profile = await profileService.getUserProfile(user.uid);
+      if (profile) {
+        setProfileData(prev => ({ ...prev, ...profile }));
+      }
+    } catch (error) {
+      console.error('Error loading profile:', error);
+    }
+  };
+
+  const loadUserPreferences = async () => {
+    try {
+      const userId = isGuestMode ? null : user?.uid;
+      const prefs = await profileService.getUserPreferences(userId);
+      setPreferences(prev => ({
+        ...prev,
+        ...prefs,
+        darkMode: isDarkMode // Always sync with current theme
+      }));
+    } catch (error) {
+      console.error('Error loading preferences:', error);
+    }
+  };
+
+  const load2FAStatus = async () => {
+    try {
+      const status = await profileService.get2FAStatus(user.uid);
+      setTwoFactorEnabled(status.twoFactorEnabled || false);
+    } catch (error) {
+      console.error('Error loading 2FA status:', error);
+    }
+  };
 
   const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
@@ -32,17 +102,85 @@ const Profile = () => {
     { id: 'security', label: 'Security', icon: Shield }
   ];
 
+  // Handle profile picture upload
+  const handleProfilePictureUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size must be less than 5MB');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const photoURL = await profileService.uploadProfilePicture(user.uid, file);
+
+      // Update profile data
+      const updatedProfile = { ...profileData, photoURL };
+      setProfileData(updatedProfile);
+
+      // Update Firebase Auth profile
+      await profileService.updateAuthProfile(user, updatedProfile);
+
+      // Update Firestore profile
+      await profileService.updateUserProfile(user.uid, updatedProfile);
+
+      toast.success('Profile picture updated successfully!');
+    } catch (error) {
+      console.error('Profile picture upload error:', error);
+      toast.error('Failed to upload profile picture');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
+
+    if (isGuestMode) {
+      toast.error('Profile editing is disabled in guest mode');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      // TODO: Update user profile in Firebase
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      // Validate required fields
+      if (!profileData.displayName?.trim()) {
+        toast.error('Full name is required');
+        setLoading(false);
+        return;
+      }
+
+      // Update Firebase Auth profile
+      await profileService.updateAuthProfile(user, profileData);
+
+      // Update Firestore profile
+      await profileService.updateUserProfile(user.uid, profileData);
+
+      // Send notification
+      try {
+        await notificationService.sendTemplateNotification(user.uid, 'profileUpdated', {
+          email: {
+            to: user.email
+          }
+        });
+      } catch (notifError) {
+        console.error('Failed to send notification:', notifError);
+      }
+
       toast.success('Profile updated successfully!');
     } catch (error) {
       console.error('Profile update error:', error);
-      toast.error('Failed to update profile');
+      toast.error(error.message || 'Failed to update profile');
     } finally {
       setLoading(false);
     }
@@ -57,9 +195,13 @@ const Profile = () => {
         toggleTheme();
       }
 
-      // TODO: Save preferences to Firebase
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      toast.success('Preferences updated successfully!');
+      // Save preferences to Firebase (only if not guest mode)
+      if (!isGuestMode) {
+        await profileService.updateUserPreferences(user.uid, preferences);
+        toast.success('Preferences updated successfully!');
+      } else {
+        toast.success('Theme preference updated!');
+      }
     } catch (error) {
       console.error('Preferences update error:', error);
       toast.error('Failed to update preferences');
@@ -68,15 +210,36 @@ const Profile = () => {
     }
   };
 
+  const handle2FAToggle = async () => {
+    if (twoFactorEnabled) {
+      // Disable 2FA
+      try {
+        await profileService.disable2FA(user.uid);
+        setTwoFactorEnabled(false);
+        toast.success('Two-factor authentication disabled');
+      } catch (error) {
+        toast.error('Failed to disable 2FA');
+      }
+    } else {
+      // Enable 2FA - show modal
+      setShowTwoFactor(true);
+    }
+  };
+
+  const handle2FAUpdate = () => {
+    setTwoFactorEnabled(true);
+    load2FAStatus(); // Reload status
+  };
+
   const renderProfileTab = () => (
     <form onSubmit={handleProfileUpdate} className="space-y-6">
       {/* Profile Picture */}
       <div className="flex items-center space-x-6">
         <div className="relative">
-          <div className="w-24 h-24 bg-primary-100 dark:bg-primary-900/20 rounded-full flex items-center justify-center">
-            {user?.photoURL ? (
+          <div className="w-24 h-24 bg-primary-100 dark:bg-primary-900/20 rounded-full flex items-center justify-center overflow-hidden">
+            {profileData.photoURL ? (
               <img
-                src={user.photoURL}
+                src={profileData.photoURL}
                 alt="Profile"
                 className="w-24 h-24 rounded-full object-cover"
               />
@@ -84,9 +247,19 @@ const Profile = () => {
               <User className="w-12 h-12 text-primary-600 dark:text-primary-400" />
             )}
           </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleProfilePictureUpload}
+            className="hidden"
+            disabled={isGuestMode || loading}
+          />
           <button
             type="button"
-            className="absolute bottom-0 right-0 bg-primary-600 text-white p-2 rounded-full hover:bg-primary-700 transition-colors"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isGuestMode || loading}
+            className="absolute bottom-0 right-0 bg-primary-600 text-white p-2 rounded-full hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Camera className="w-4 h-4" />
           </button>
@@ -96,7 +269,7 @@ const Profile = () => {
             Profile Picture
           </h3>
           <p className="text-sm text-secondary-600 dark:text-secondary-400">
-            Upload a professional photo for your CV
+            Upload a professional photo for your CV (max 5MB)
           </p>
         </div>
       </div>
@@ -209,11 +382,9 @@ const Profile = () => {
                 </p>
               </div>
             </div>
-            <input
-              type="checkbox"
+            <ToggleSwitch
               checked={preferences.darkMode}
-              onChange={(e) => setPreferences({...preferences, darkMode: e.target.checked})}
-              className="toggle"
+              onChange={(checked) => setPreferences({...preferences, darkMode: checked})}
             />
           </label>
         </div>
@@ -223,6 +394,37 @@ const Profile = () => {
         <h3 className="text-lg font-semibold text-secondary-900 dark:text-white mb-4">
           Notifications
         </h3>
+
+        {/* Email Status Indicator */}
+        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-6">
+          <div className="flex items-center space-x-2">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <span className="text-sm font-medium text-green-900 dark:text-green-100">
+              Email Status: EmailJS Active
+            </span>
+          </div>
+          <p className="text-xs text-green-800 dark:text-green-200 mt-1">
+            Real emails will be sent via EmailJS. Check your inbox after profile updates.
+          </p>
+          <div className="mt-3">
+            <button
+              onClick={async () => {
+                try {
+                  await notificationService.sendTemplateNotification(user?.uid || 'guest', 'test-email', {
+                    email: { to: user?.email || 'test@example.com' }
+                  });
+                  toast.success('Test email sent! Check your inbox.');
+                } catch (error) {
+                  toast.error('Test email failed: ' + error.message);
+                }
+              }}
+              className="text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md transition-colors"
+            >
+              Send Test Email
+            </button>
+          </div>
+        </div>
+
         <div className="space-y-4">
           <label className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -234,54 +436,24 @@ const Profile = () => {
                 </p>
               </div>
             </div>
-            <input
-              type="checkbox"
+            <ToggleSwitch
               checked={preferences.emailNotifications}
-              onChange={(e) => setPreferences({...preferences, emailNotifications: e.target.checked})}
-              className="toggle"
+              onChange={(checked) => setPreferences({...preferences, emailNotifications: checked})}
               disabled={isGuestMode}
             />
           </label>
 
-          <label className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Bell className="w-5 h-5 text-secondary-600 dark:text-secondary-400" />
-              <div>
-                <span className="text-secondary-900 dark:text-white">Push Notifications</span>
-                <p className="text-sm text-secondary-600 dark:text-secondary-400">
-                  Get notified about important updates
-                </p>
-              </div>
-            </div>
-            <input
-              type="checkbox"
-              checked={preferences.pushNotifications}
-              onChange={(e) => setPreferences({...preferences, pushNotifications: e.target.checked})}
-              className="toggle"
-              disabled={isGuestMode}
-            />
-          </label>
 
-          <label className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Mail className="w-5 h-5 text-secondary-600 dark:text-secondary-400" />
-              <div>
-                <span className="text-secondary-900 dark:text-white">Marketing Emails</span>
-                <p className="text-sm text-secondary-600 dark:text-secondary-400">
-                  Receive tips and updates about CV writing
-                </p>
-              </div>
-            </div>
-            <input
-              type="checkbox"
-              checked={preferences.marketingEmails}
-              onChange={(e) => setPreferences({...preferences, marketingEmails: e.target.checked})}
-              className="toggle"
-              disabled={isGuestMode}
-            />
-          </label>
         </div>
       </div>
+
+      {isGuestMode && (
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+          <p className="text-yellow-800 dark:text-yellow-200 text-sm">
+            Some preferences are disabled in guest mode. Create an account to save all your preferences.
+          </p>
+        </div>
+      )}
 
       <button
         onClick={handlePreferencesUpdate}
@@ -317,10 +489,13 @@ const Profile = () => {
                 <div>
                   <h4 className="font-medium text-secondary-900 dark:text-white">Password</h4>
                   <p className="text-sm text-secondary-600 dark:text-secondary-400">
-                    Last changed 30 days ago
+                    Change your account password
                   </p>
                 </div>
-                <button className="btn-secondary">
+                <button
+                  onClick={() => setShowChangePassword(true)}
+                  className="btn-secondary"
+                >
                   Change Password
                 </button>
               </div>
@@ -331,11 +506,17 @@ const Profile = () => {
                 <div>
                   <h4 className="font-medium text-secondary-900 dark:text-white">Two-Factor Authentication</h4>
                   <p className="text-sm text-secondary-600 dark:text-secondary-400">
-                    Add an extra layer of security to your account
+                    {twoFactorEnabled
+                      ? 'Your account is protected with 2FA'
+                      : 'Add an extra layer of security to your account'
+                    }
                   </p>
                 </div>
-                <button className="btn-secondary">
-                  Enable 2FA
+                <button
+                  onClick={handle2FAToggle}
+                  className={twoFactorEnabled ? "btn-secondary" : "btn-primary"}
+                >
+                  {twoFactorEnabled ? 'Disable 2FA' : 'Enable 2FA'}
                 </button>
               </div>
             </div>
@@ -345,10 +526,13 @@ const Profile = () => {
                 <div>
                   <h4 className="font-medium text-secondary-900 dark:text-white">Login Sessions</h4>
                   <p className="text-sm text-secondary-600 dark:text-secondary-400">
-                    Manage your active sessions
+                    Manage your active sessions across devices
                   </p>
                 </div>
-                <button className="btn-secondary">
+                <button
+                  onClick={() => setShowSessions(true)}
+                  className="btn-secondary"
+                >
                   View Sessions
                 </button>
               </div>
@@ -400,6 +584,23 @@ const Profile = () => {
         {activeTab === 'preferences' && renderPreferencesTab()}
         {activeTab === 'security' && renderSecurityTab()}
       </div>
+
+      {/* Modals */}
+      <ChangePasswordModal
+        isOpen={showChangePassword}
+        onClose={() => setShowChangePassword(false)}
+      />
+
+      <TwoFactorModal
+        isOpen={showTwoFactor}
+        onClose={() => setShowTwoFactor(false)}
+        onUpdate={handle2FAUpdate}
+      />
+
+      <SessionsModal
+        isOpen={showSessions}
+        onClose={() => setShowSessions(false)}
+      />
     </div>
   );
 };

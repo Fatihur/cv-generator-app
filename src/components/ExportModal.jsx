@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Download, FileText, Code, File } from 'lucide-react';
+import { X, Download, FileText, Code, File, Image } from 'lucide-react';
 import exportService from '../services/exportService';
 import toast from 'react-hot-toast';
 
@@ -32,6 +32,13 @@ const ExportModal = ({ isOpen, onClose, cvData }) => {
       extension: '.pdf'
     },
     {
+      id: 'pdf-visual',
+      name: 'PDF Visual',
+      description: 'Visual layout with icons and styling preserved',
+      icon: Image,
+      extension: '.pdf'
+    },
+    {
       id: 'txt',
       name: 'Plain Text',
       description: 'Simple text format, universal compatibility',
@@ -52,11 +59,11 @@ const ExportModal = ({ isOpen, onClose, cvData }) => {
 
     setExporting(true);
     try {
-      const filename = cvData.cvName || 
+      const filename = cvData.cvName ||
         cvData.personal?.fullName?.replace(/\s+/g, '_') || 'CV';
-      
+
       await exportService.exportToFormat(cvData, filename, selectedFormat);
-      
+
       const formatName = exportFormats.find(f => f.id === selectedFormat)?.name || 'file';
       toast.success(`CV exported as ${formatName} successfully!`);
       onClose();
@@ -142,12 +149,14 @@ const ExportModal = ({ isOpen, onClose, cvData }) => {
             </h4>
             <div className="text-sm text-secondary-600 dark:text-secondary-400">
               <p><strong>CV Name:</strong> {cvData?.cvName || cvData?.personal?.fullName || 'Untitled CV'}</p>
-              <p><strong>Template:</strong> {cvData?.template || 'Modern'}</p>
+              <p><strong>Format:</strong> Professional Layout</p>
               <p><strong>Sections:</strong> {[
                 cvData?.personal?.fullName && 'Personal Info',
                 cvData?.experience?.length > 0 && 'Experience',
                 cvData?.education?.length > 0 && 'Education',
-                cvData?.skills?.length > 0 && 'Skills'
+                cvData?.skills?.length > 0 && 'Skills',
+                cvData?.achievements?.length > 0 && 'Achievements',
+                cvData?.certificates?.length > 0 && 'Certificates'
               ].filter(Boolean).join(', ') || 'None'}</p>
             </div>
           </div>
