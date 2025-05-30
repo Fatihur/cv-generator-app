@@ -16,6 +16,7 @@ import {
   Shield
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import useDocumentTitle from '../../hooks/useDocumentTitle';
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -23,6 +24,9 @@ const Login = () => {
   const [isVisible, setIsVisible] = useState(false);
   const { login, loginWithGoogle, enterGuestMode } = useAuth();
   const navigate = useNavigate();
+
+  // Set page title
+  useDocumentTitle('Sign In');
 
   useEffect(() => {
     setIsVisible(true);

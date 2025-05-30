@@ -3,12 +3,16 @@ import { Link } from 'react-router-dom';
 import { Plus, FileText, Bot, Sparkles, TrendingUp, Users, Clock, Edit } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import cvService from '../services/cvService';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 
 
 const Dashboard = () => {
   const { user, isGuestMode } = useAuth();
   const [recentCVs, setRecentCVs] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Set page title
+  useDocumentTitle('Dashboard');
 
   useEffect(() => {
     loadRecentCVs();

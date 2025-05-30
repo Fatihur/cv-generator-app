@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Download, ArrowLeft, Mail, Phone, MapPin, Globe } from 'lucide-react';
 import exportService from '../services/exportService';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 import toast from 'react-hot-toast';
 
 const SharedCV = () => {
@@ -9,6 +10,12 @@ const SharedCV = () => {
   const [cvData, setCvData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Dynamic title based on CV data
+  const cvTitle = cvData?.personal?.fullName
+    ? `${cvData.personal.fullName}'s CV`
+    : 'Shared Professional CV';
+  useDocumentTitle(cvTitle);
 
   useEffect(() => {
     const loadSharedCV = async () => {
