@@ -49,23 +49,23 @@ const BottomNavigation = () => {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-secondary-800 border-t border-secondary-200 dark:border-secondary-700 md:hidden z-50">
-      <div className="flex items-center justify-around py-2 relative">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-secondary-800/95 backdrop-blur-lg border-t border-secondary-200 dark:border-secondary-700 md:hidden z-50 safe-area-pb bottom-nav-enter">
+      <div className="flex items-center justify-around px-2 py-1 relative max-w-md mx-auto">
         {/* Main Navigation Items */}
         {mainNavItems.map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}
             to={to}
             className={({ isActive }) =>
-              `flex flex-col items-center py-2 px-3 rounded-lg transition-colors ${
+              `flex flex-col items-center py-2 px-2 min-w-[60px] rounded-xl transition-all duration-200 ${
                 isActive
-                  ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20'
-                  : 'text-secondary-600 dark:text-secondary-400 hover:text-primary-600 dark:hover:text-primary-400'
+                  ? 'text-primary-600 dark:text-primary-400 bg-primary-100 dark:bg-primary-900/30 scale-105'
+                  : 'text-secondary-600 dark:text-secondary-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-secondary-100 dark:hover:bg-secondary-700/50'
               }`
             }
           >
-            <Icon className="w-5 h-5 mb-1" />
-            <span className="text-xs font-medium">{label}</span>
+            <Icon className="w-6 h-6 mb-1" />
+            <span className="text-xs font-medium leading-tight">{label}</span>
           </NavLink>
         ))}
 
@@ -73,85 +73,122 @@ const BottomNavigation = () => {
         <div className="relative" ref={moreMenuRef}>
           <button
             onClick={() => setShowMoreMenu(!showMoreMenu)}
-            className={`flex flex-col items-center py-2 px-3 rounded-lg transition-colors ${
+            className={`flex flex-col items-center py-2 px-2 min-w-[60px] rounded-xl transition-all duration-200 ${
               showMoreMenu || ['/dashboard/profile', '/dashboard/about'].includes(location.pathname)
-                ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20'
-                : 'text-secondary-600 dark:text-secondary-400 hover:text-primary-600 dark:hover:text-primary-400'
+                ? 'text-primary-600 dark:text-primary-400 bg-primary-100 dark:bg-primary-900/30 scale-105'
+                : 'text-secondary-600 dark:text-secondary-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-secondary-100 dark:hover:bg-secondary-700/50'
             }`}
           >
-            <User className="w-5 h-5 mb-1" />
-            <span className="text-xs font-medium">More</span>
+            <User className="w-6 h-6 mb-1" />
+            <span className="text-xs font-medium leading-tight">More</span>
           </button>
 
           {/* More Menu Dropdown */}
           {showMoreMenu && (
-            <div className="absolute bottom-full right-0 mb-2 w-48 bg-white dark:bg-secondary-800 border border-secondary-200 dark:border-secondary-700 rounded-lg shadow-lg">
+            <div className="absolute bottom-full right-0 mb-3 w-56 bg-white/95 dark:bg-secondary-800/95 backdrop-blur-lg border border-secondary-200 dark:border-secondary-700 rounded-xl shadow-xl bottom-nav-menu-enter">
               <div className="py-2">
                 {/* User Info */}
                 {!isGuestMode && (
-                  <div className="px-4 py-2 border-b border-secondary-200 dark:border-secondary-700">
-                    <p className="text-sm font-medium text-secondary-900 dark:text-white">
-                      {user?.displayName || 'User'}
-                    </p>
-                    <p className="text-xs text-secondary-600 dark:text-secondary-400">
-                      {user?.email}
-                    </p>
+                  <div className="px-4 py-3 border-b border-secondary-200 dark:border-secondary-700">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center">
+                        {user?.photoURL ? (
+                          <img
+                            src={user.photoURL}
+                            alt="Profile"
+                            className="w-10 h-10 rounded-full"
+                          />
+                        ) : (
+                          <User className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-secondary-900 dark:text-white truncate">
+                          {user?.displayName || 'User'}
+                        </p>
+                        <p className="text-xs text-secondary-600 dark:text-secondary-400 truncate">
+                          {user?.email}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 )}
 
-                {/* Profile Settings */}
-                {!isGuestMode && (
-                  <Link
-                    to="/dashboard/profile"
-                    onClick={() => setShowMoreMenu(false)}
-                    className="flex items-center space-x-2 px-4 py-2 text-sm text-secondary-700 dark:text-secondary-300 hover:bg-secondary-100 dark:hover:bg-secondary-700 transition-colors"
-                  >
-                    <Settings className="w-4 h-4" />
-                    <span>Profile Settings</span>
-                  </Link>
+                {/* Guest Mode Info */}
+                {isGuestMode && (
+                  <div className="px-4 py-3 border-b border-secondary-200 dark:border-secondary-700">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center">
+                        <User className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-secondary-900 dark:text-white">
+                          Guest Mode
+                        </p>
+                        <p className="text-xs text-secondary-600 dark:text-secondary-400">
+                          Limited features
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 )}
 
-                {/* About */}
-                <Link
-                  to="/dashboard/about"
-                  onClick={() => setShowMoreMenu(false)}
-                  className="flex items-center space-x-2 px-4 py-2 text-sm text-secondary-700 dark:text-secondary-300 hover:bg-secondary-100 dark:hover:bg-secondary-700 transition-colors"
-                >
-                  <Info className="w-4 h-4" />
-                  <span>About</span>
-                </Link>
-
-                {/* Theme Toggle */}
-                <button
-                  onClick={() => {
-                    toggleTheme();
-                    setShowMoreMenu(false);
-                  }}
-                  className="flex items-center space-x-2 px-4 py-2 text-sm text-secondary-700 dark:text-secondary-300 hover:bg-secondary-100 dark:hover:bg-secondary-700 transition-colors w-full text-left"
-                >
-                  {isDarkMode ? (
-                    <>
-                      <Sun className="w-4 h-4" />
-                      <span>Light Mode</span>
-                    </>
-                  ) : (
-                    <>
-                      <Moon className="w-4 h-4" />
-                      <span>Dark Mode</span>
-                    </>
+                {/* Menu Items */}
+                <div className="py-1">
+                  {/* Profile Settings */}
+                  {!isGuestMode && (
+                    <Link
+                      to="/dashboard/profile"
+                      onClick={() => setShowMoreMenu(false)}
+                      className="flex items-center space-x-3 px-4 py-3 text-sm text-secondary-700 dark:text-secondary-300 hover:bg-secondary-100 dark:hover:bg-secondary-700/50 transition-colors rounded-lg mx-2"
+                    >
+                      <Settings className="w-5 h-5" />
+                      <span>Profile Settings</span>
+                    </Link>
                   )}
-                </button>
+
+                  {/* About */}
+                  <Link
+                    to="/dashboard/about"
+                    onClick={() => setShowMoreMenu(false)}
+                    className="flex items-center space-x-3 px-4 py-3 text-sm text-secondary-700 dark:text-secondary-300 hover:bg-secondary-100 dark:hover:bg-secondary-700/50 transition-colors rounded-lg mx-2"
+                  >
+                    <Info className="w-5 h-5" />
+                    <span>About</span>
+                  </Link>
+
+                  {/* Theme Toggle */}
+                  <button
+                    onClick={() => {
+                      toggleTheme();
+                      setShowMoreMenu(false);
+                    }}
+                    className="flex items-center space-x-3 px-4 py-3 text-sm text-secondary-700 dark:text-secondary-300 hover:bg-secondary-100 dark:hover:bg-secondary-700/50 transition-colors w-full text-left rounded-lg mx-2"
+                  >
+                    {isDarkMode ? (
+                      <>
+                        <Sun className="w-5 h-5" />
+                        <span>Light Mode</span>
+                      </>
+                    ) : (
+                      <>
+                        <Moon className="w-5 h-5" />
+                        <span>Dark Mode</span>
+                      </>
+                    )}
+                  </button>
+                </div>
 
                 {/* Sign Out */}
-                <div className="border-t border-secondary-200 dark:border-secondary-700 mt-2 pt-2">
+                <div className="border-t border-secondary-200 dark:border-secondary-700 pt-2">
                   <button
                     onClick={() => {
                       logout();
                       setShowMoreMenu(false);
                     }}
-                    className="flex items-center space-x-2 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors w-full text-left"
+                    className="flex items-center space-x-3 px-4 py-3 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors w-full text-left rounded-lg mx-2"
                   >
-                    <LogOut className="w-4 h-4" />
+                    <LogOut className="w-5 h-5" />
                     <span>Sign Out</span>
                   </button>
                 </div>

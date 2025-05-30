@@ -209,3 +209,62 @@
     border-radius: 0.375rem;
   }
 }
+
+/* Bottom Navigation Improvements */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Bottom Navigation Animations */
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.bottom-nav-enter {
+  animation: slideUp 0.3s ease-out;
+}
+
+.bottom-nav-menu-enter {
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Mobile Navigation Enhancements */
+@media (max-width: 768px) {
+  .bottom-nav-item {
+    min-height: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .bottom-nav-icon {
+    transition: transform 0.2s ease;
+  }
+
+  .bottom-nav-item:active .bottom-nav-icon {
+    transform: scale(0.9);
+  }
+
+  .bottom-nav-item.active .bottom-nav-icon {
+    transform: scale(1.1);
+  }
+}

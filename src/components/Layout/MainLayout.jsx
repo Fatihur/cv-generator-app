@@ -23,7 +23,7 @@ const MainLayout = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-secondary-900 flex flex-col">
       <Header />
 
-      <main className="flex-1 pb-20 md:pb-0">
+      <main className="flex-1 pb-24 md:pb-0">
         <div className="container mx-auto px-4 py-6 max-w-7xl">
           <Outlet />
         </div>
