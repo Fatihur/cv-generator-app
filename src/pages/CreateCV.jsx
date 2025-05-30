@@ -279,7 +279,7 @@ const CreateCV = () => {
         await exportService.exportToPDFAsImage(watchedData, filename);
         toast.success('Visual CV exported to PDF successfully!');
       } else if (type === 'share') {
-        const shareUrl = exportService.generateShareableLink(watchedData);
+        const shareUrl = await exportService.generateShareableLink(watchedData);
         await exportService.copyToClipboard(shareUrl);
         toast.success('Share link copied to clipboard!');
 

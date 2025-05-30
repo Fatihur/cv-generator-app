@@ -1045,7 +1045,7 @@ class ExportService {
   async shareViaWebAPI(cvData) {
     if (navigator.share) {
       try {
-        const shareUrl = this.generateShareableLink(cvData);
+        const shareUrl = await this.generateShareableLink(cvData);
         await navigator.share({
           title: `${cvData.personal?.fullName || 'CV'} - Professional Resume`,
           text: 'Check out my professional CV',
@@ -1063,9 +1063,9 @@ class ExportService {
   }
 
   // Share via email
-  shareViaEmail(cvData) {
+  async shareViaEmail(cvData) {
     const subject = encodeURIComponent(`${cvData.personal?.fullName || 'Professional'} CV`);
-    const shareUrl = this.generateShareableLink(cvData);
+    const shareUrl = await this.generateShareableLink(cvData);
     const body = encodeURIComponent(`Hi,\n\nI'd like to share my professional CV with you.\n\nYou can view it here: ${shareUrl}\n\nBest regards,\n${cvData.personal?.fullName || 'Professional'}`);
 
     const mailtoUrl = `mailto:?subject=${subject}&body=${body}`;
@@ -1073,16 +1073,16 @@ class ExportService {
   }
 
   // Share via WhatsApp
-  shareViaWhatsApp(cvData) {
-    const shareUrl = this.generateShareableLink(cvData);
+  async shareViaWhatsApp(cvData) {
+    const shareUrl = await this.generateShareableLink(cvData);
     const message = encodeURIComponent(`Hi! I'd like to share my professional CV with you: ${shareUrl}`);
     const whatsappUrl = `https://wa.me/?text=${message}`;
     window.open(whatsappUrl, '_blank');
   }
 
   // Share via LinkedIn
-  shareViaLinkedIn(cvData) {
-    const shareUrl = this.generateShareableLink(cvData);
+  async shareViaLinkedIn(cvData) {
+    const shareUrl = await this.generateShareableLink(cvData);
     const title = encodeURIComponent(`${cvData.personal?.fullName || 'Professional'} CV`);
     const summary = encodeURIComponent('Check out my professional CV');
 

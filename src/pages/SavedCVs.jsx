@@ -192,7 +192,7 @@ const SavedCVs = () => {
         await exportService.exportToPDFAsImage(selectedCV, filename);
         toast.success('CV exported to PDF successfully!');
       } else if (type === 'share') {
-        const shareUrl = exportService.generateShareableLink(selectedCV);
+        const shareUrl = await exportService.generateShareableLink(selectedCV);
         await exportService.copyToClipboard(shareUrl);
         toast.success('Share link copied to clipboard!');
 

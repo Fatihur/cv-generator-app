@@ -43,20 +43,20 @@ const CVPreview = ({ isOpen, onClose, cvData, onExport }) => {
     try {
       switch (method) {
         case 'link':
-          const shareUrl = exportService.generateShareableLink(cvData);
+          const shareUrl = await exportService.generateShareableLink(cvData);
           await exportService.copyToClipboard(shareUrl);
           toast.success('Share link copied to clipboard!');
           break;
         case 'email':
-          exportService.shareViaEmail(cvData);
+          await exportService.shareViaEmail(cvData);
           toast.success('Email client opened!');
           break;
         case 'whatsapp':
-          exportService.shareViaWhatsApp(cvData);
+          await exportService.shareViaWhatsApp(cvData);
           toast.success('WhatsApp opened!');
           break;
         case 'linkedin':
-          exportService.shareViaLinkedIn(cvData);
+          await exportService.shareViaLinkedIn(cvData);
           toast.success('LinkedIn opened!');
           break;
         case 'native':
@@ -65,7 +65,7 @@ const CVPreview = ({ isOpen, onClose, cvData, onExport }) => {
             toast.success('Shared successfully!');
           } else {
             // Fallback to copy link
-            const shareUrl = exportService.generateShareableLink(cvData);
+            const shareUrl = await exportService.generateShareableLink(cvData);
             await exportService.copyToClipboard(shareUrl);
             toast.success('Share link copied to clipboard!');
           }
