@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import CVPreview from '../components/CVPreview';
 import ExportModal from '../components/ExportModal';
 import BackButton from '../components/BackButton';
+import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
 import cvService from '../services/cvService';
 import exportService from '../services/exportService';
 import notificationService from '../services/notificationService';
@@ -17,6 +18,9 @@ const SavedCVs = () => {
   const [selectedCV, setSelectedCV] = useState(null);
   const [showExportModal, setShowExportModal] = useState(false);
   const [exportingCV, setExportingCV] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [cvToDelete, setCvToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { user, isGuestMode } = useAuth();
   const navigate = useNavigate();
 
@@ -107,25 +111,28 @@ const SavedCVs = () => {
     });
   };
 
-  const deleteCV = async (cvId) => {
-    // Show confirmation dialog
-    const confirmed = window.confirm('Are you sure you want to delete this CV? This action cannot be undone.');
+  // Show delete confirmation modal
+  const showDeleteConfirmation = (cv) => {
+    setCvToDelete(cv);
+    setShowDeleteModal(true);
+  };
 
-    if (!confirmed) return;
+  // Handle confirmed deletion
+  const handleDeleteConfirmed = async () => {
+    if (!cvToDelete) return;
 
+    setIsDeleting(true);
     try {
-      // Find the CV to get its name for the email notification
-      const cvToDelete = cvs.find(cv => cv.id === cvId);
-      const cvName = cvToDelete?.cvName || cvToDelete?.personal?.fullName || 'Untitled CV';
+      const cvName = cvToDelete.cvName || cvToDelete.personal?.fullName || 'Untitled CV';
 
       if (isGuestMode) {
         // Delete from localStorage for guest users
-        await cvService.deleteGuestCV(cvId);
+        await cvService.deleteGuestCV(cvToDelete.id);
         const updatedCVs = await cvService.getGuestCVs();
         setCvs(updatedCVs);
       } else {
         // Delete from Firebase for authenticated users
-        await cvService.deleteCV(cvId, user.uid);
+        await cvService.deleteCV(cvToDelete.id, user.uid);
         const updatedCVs = await cvService.getUserCVs(user.uid);
         setCvs(updatedCVs);
       }
@@ -147,14 +154,26 @@ const SavedCVs = () => {
       }
 
       // Close preview modal if the deleted CV was being previewed
-      if (selectedCV && selectedCV.id === cvId) {
+      if (selectedCV && selectedCV.id === cvToDelete.id) {
         setShowPreview(false);
         setSelectedCV(null);
       }
+
+      // Close delete modal
+      setShowDeleteModal(false);
+      setCvToDelete(null);
     } catch (error) {
       console.error('Error deleting CV:', error);
       toast.error(error.message || 'Failed to delete CV');
+    } finally {
+      setIsDeleting(false);
     }
+  };
+
+  // Cancel deletion
+  const handleDeleteCancelled = () => {
+    setShowDeleteModal(false);
+    setCvToDelete(null);
   };
 
   const previewCV = (cv) => {
@@ -310,7 +329,7 @@ const SavedCVs = () => {
                     <Share className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => deleteCV(cv.id)}
+                    onClick={() => showDeleteConfirmation(cv)}
                     className="p-2 text-secondary-600 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                     title="Delete"
                   >
@@ -391,6 +410,15 @@ const SavedCVs = () => {
           setExportingCV(null);
         }}
         cvData={exportingCV}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={handleDeleteCancelled}
+        onConfirm={handleDeleteConfirmed}
+        cvData={cvToDelete}
+        isDeleting={isDeleting}
       />
     </div>
   );
