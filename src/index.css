@@ -249,22 +249,72 @@
 /* Mobile Navigation Enhancements */
 @media (max-width: 768px) {
   .bottom-nav-item {
-    min-height: 60px;
+    min-height: 64px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    padding: 8px 12px;
   }
 
   .bottom-nav-icon {
-    transition: transform 0.2s ease;
+    transition: transform 0.2s ease, color 0.2s ease;
   }
 
   .bottom-nav-item:active .bottom-nav-icon {
-    transform: scale(0.9);
+    transform: scale(0.95);
   }
 
   .bottom-nav-item.active .bottom-nav-icon {
     transform: scale(1.1);
+    color: var(--primary-600);
+  }
+
+  /* Modal padding improvements */
+  .bottom-nav-modal {
+    margin-top: 8px;
+    margin-bottom: 8px;
+  }
+
+  /* Ensure modals don't get cut off */
+  .bottom-nav-dropdown {
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+  }
+}
+
+/* Modal Improvements for Mobile */
+@media (max-width: 640px) {
+  /* Delete Modal Specific */
+  .delete-modal-container {
+    padding-bottom: 2rem !important;
+    padding-top: 1rem !important;
+  }
+
+  .delete-modal-content {
+    margin: 1rem 0 !important;
+    max-height: calc(100vh - 6rem);
+    overflow-y: auto;
+  }
+
+  /* General Modal Improvements */
+  .modal-container {
+    padding: 1rem;
+    padding-bottom: 2rem;
+  }
+
+  .modal-content {
+    margin: 1rem 0;
+    max-height: calc(100vh - 4rem);
+    overflow-y: auto;
+  }
+
+  /* Ensure footer buttons are always visible */
+  .modal-footer {
+    position: sticky;
+    bottom: 0;
+    background: inherit;
+    border-top: 1px solid var(--border-color);
+    margin-top: auto;
   }
 }

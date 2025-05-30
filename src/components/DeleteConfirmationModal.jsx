@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { AlertTriangle, Trash2, X, FileText, Calendar, User } from 'lucide-react';
 
-const DeleteConfirmationModal = ({ 
-  isOpen, 
-  onClose, 
-  onConfirm, 
+const DeleteConfirmationModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
   cvData,
-  isDeleting = false 
+  isDeleting = false
 }) => {
   const [confirmText, setConfirmText] = useState('');
   const [understood, setUnderstood] = useState(false);
@@ -32,8 +32,8 @@ const DeleteConfirmationModal = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-xl max-w-md w-full">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 pb-8 delete-modal-container">
+      <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-xl max-w-md w-full my-4 delete-modal-content">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-secondary-200 dark:border-secondary-700">
           <div className="flex items-center space-x-3">
@@ -136,7 +136,7 @@ const DeleteConfirmationModal = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end space-x-3 p-6 border-t border-secondary-200 dark:border-secondary-700">
+        <div className="flex items-center justify-end space-x-3 p-6 border-t border-secondary-200 dark:border-secondary-700 modal-footer">
           <button
             onClick={handleClose}
             disabled={isDeleting}

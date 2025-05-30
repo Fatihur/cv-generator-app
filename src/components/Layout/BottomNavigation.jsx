@@ -50,22 +50,26 @@ const BottomNavigation = () => {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-secondary-800/95 backdrop-blur-lg border-t border-secondary-200 dark:border-secondary-700 md:hidden z-50 safe-area-pb bottom-nav-enter">
-      <div className="flex items-center justify-around px-2 py-1 relative max-w-md mx-auto">
+      <div className="flex items-center justify-around px-4 py-2 relative max-w-md mx-auto">
         {/* Main Navigation Items */}
         {mainNavItems.map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}
             to={to}
             className={({ isActive }) =>
-              `flex flex-col items-center py-2 px-2 min-w-[60px] rounded-xl transition-all duration-200 ${
+              `flex flex-col items-center py-3 px-2 min-w-[60px] rounded-xl transition-all duration-200 ${
                 isActive
-                  ? 'text-primary-600 dark:text-primary-400 bg-primary-100 dark:bg-primary-900/30 scale-105'
-                  : 'text-secondary-600 dark:text-secondary-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-secondary-100 dark:hover:bg-secondary-700/50'
+                  ? 'text-primary-600 dark:text-primary-400'
+                  : 'text-secondary-500 dark:text-secondary-400 hover:text-primary-600 dark:hover:text-primary-400'
               }`
             }
           >
-            <Icon className="w-6 h-6 mb-1" />
-            <span className="text-xs font-medium leading-tight">{label}</span>
+            {({ isActive }) => (
+              <>
+                <Icon className={`w-6 h-6 mb-1 transition-transform duration-200 ${isActive ? 'scale-110' : ''}`} />
+                <span className="text-xs font-medium leading-tight">{label}</span>
+              </>
+            )}
           </NavLink>
         ))}
 
@@ -73,20 +77,22 @@ const BottomNavigation = () => {
         <div className="relative" ref={moreMenuRef}>
           <button
             onClick={() => setShowMoreMenu(!showMoreMenu)}
-            className={`flex flex-col items-center py-2 px-2 min-w-[60px] rounded-xl transition-all duration-200 ${
+            className={`flex flex-col items-center py-3 px-2 min-w-[60px] rounded-xl transition-all duration-200 ${
               showMoreMenu || ['/dashboard/profile', '/dashboard/about'].includes(location.pathname)
-                ? 'text-primary-600 dark:text-primary-400 bg-primary-100 dark:bg-primary-900/30 scale-105'
-                : 'text-secondary-600 dark:text-secondary-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-secondary-100 dark:hover:bg-secondary-700/50'
+                ? 'text-primary-600 dark:text-primary-400'
+                : 'text-secondary-500 dark:text-secondary-400 hover:text-primary-600 dark:hover:text-primary-400'
             }`}
           >
-            <User className="w-6 h-6 mb-1" />
+            <User className={`w-6 h-6 mb-1 transition-transform duration-200 ${
+              showMoreMenu || ['/dashboard/profile', '/dashboard/about'].includes(location.pathname) ? 'scale-110' : ''
+            }`} />
             <span className="text-xs font-medium leading-tight">More</span>
           </button>
 
           {/* More Menu Dropdown */}
           {showMoreMenu && (
-            <div className="absolute bottom-full right-0 mb-3 w-56 bg-white/95 dark:bg-secondary-800/95 backdrop-blur-lg border border-secondary-200 dark:border-secondary-700 rounded-xl shadow-xl bottom-nav-menu-enter">
-              <div className="py-2">
+            <div className="absolute bottom-full right-0 mb-6 w-56 bg-white/95 dark:bg-secondary-800/95 backdrop-blur-lg border border-secondary-200 dark:border-secondary-700 rounded-xl shadow-xl bottom-nav-menu-enter bottom-nav-dropdown">
+              <div className="py-3">
                 {/* User Info */}
                 {!isGuestMode && (
                   <div className="px-4 py-3 border-b border-secondary-200 dark:border-secondary-700">
@@ -134,13 +140,13 @@ const BottomNavigation = () => {
                 )}
 
                 {/* Menu Items */}
-                <div className="py-1">
+                <div className="py-2">
                   {/* Profile Settings */}
                   {!isGuestMode && (
                     <Link
                       to="/dashboard/profile"
                       onClick={() => setShowMoreMenu(false)}
-                      className="flex items-center space-x-3 px-4 py-3 text-sm text-secondary-700 dark:text-secondary-300 hover:bg-secondary-100 dark:hover:bg-secondary-700/50 transition-colors rounded-lg mx-2"
+                      className="flex items-center space-x-3 px-4 py-3 text-sm text-secondary-700 dark:text-secondary-300 hover:bg-secondary-100 dark:hover:bg-secondary-700/50 transition-colors rounded-lg mx-3"
                     >
                       <Settings className="w-5 h-5" />
                       <span>Profile Settings</span>
@@ -151,7 +157,7 @@ const BottomNavigation = () => {
                   <Link
                     to="/dashboard/about"
                     onClick={() => setShowMoreMenu(false)}
-                    className="flex items-center space-x-3 px-4 py-3 text-sm text-secondary-700 dark:text-secondary-300 hover:bg-secondary-100 dark:hover:bg-secondary-700/50 transition-colors rounded-lg mx-2"
+                    className="flex items-center space-x-3 px-4 py-3 text-sm text-secondary-700 dark:text-secondary-300 hover:bg-secondary-100 dark:hover:bg-secondary-700/50 transition-colors rounded-lg mx-3"
                   >
                     <Info className="w-5 h-5" />
                     <span>About</span>
@@ -163,7 +169,7 @@ const BottomNavigation = () => {
                       toggleTheme();
                       setShowMoreMenu(false);
                     }}
-                    className="flex items-center space-x-3 px-4 py-3 text-sm text-secondary-700 dark:text-secondary-300 hover:bg-secondary-100 dark:hover:bg-secondary-700/50 transition-colors w-full text-left rounded-lg mx-2"
+                    className="flex items-center space-x-3 px-4 py-3 text-sm text-secondary-700 dark:text-secondary-300 hover:bg-secondary-100 dark:hover:bg-secondary-700/50 transition-colors w-full text-left rounded-lg mx-3"
                   >
                     {isDarkMode ? (
                       <>
@@ -180,13 +186,13 @@ const BottomNavigation = () => {
                 </div>
 
                 {/* Sign Out */}
-                <div className="border-t border-secondary-200 dark:border-secondary-700 pt-2">
+                <div className="border-t border-secondary-200 dark:border-secondary-700 pt-3 pb-1">
                   <button
                     onClick={() => {
                       logout();
                       setShowMoreMenu(false);
                     }}
-                    className="flex items-center space-x-3 px-4 py-3 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors w-full text-left rounded-lg mx-2"
+                    className="flex items-center space-x-3 px-4 py-3 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors w-full text-left rounded-lg mx-3"
                   >
                     <LogOut className="w-5 h-5" />
                     <span>Sign Out</span>
