@@ -1,0 +1,8 @@
+# Netlify redirects file for SPA routing
+# This ensures all routes are handled by React Router
+
+# Handle shared CV routes
+/shared/* /index.html 200
+
+# Handle all other routes
+/* /index.html 200

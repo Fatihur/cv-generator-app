@@ -352,7 +352,11 @@ class ShareService {
   // Generate share URL
   generateShareUrl(shareId) {
     const baseUrl = window.location.origin;
-    return `${baseUrl}/shared/${shareId}`;
+    const shareUrl = `${baseUrl}/shared/${shareId}`;
+    console.log('Generated share URL:', shareUrl);
+    console.log('Base URL:', baseUrl);
+    console.log('Share ID:', shareId);
+    return shareUrl;
   }
 
   // Copy to clipboard

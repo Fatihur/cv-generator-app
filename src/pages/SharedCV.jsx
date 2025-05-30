@@ -19,14 +19,36 @@ const SharedCV = () => {
 
         console.log('Loading shared CV from Firebase with ID:', shareId);
 
+        // Validate share ID format (should be 8 characters)
+        if (shareId.length !== 8) {
+          throw new Error('Invalid share ID format. Share links should contain an 8-character ID.');
+        }
+
         // Get CV data using Firebase
         const sharedCVData = await exportService.getSharedCV(shareId);
         console.log('Loaded shared CV data:', sharedCVData);
 
+        if (!sharedCVData) {
+          throw new Error('CV not found. The link may be invalid, expired, or the CV may have been removed.');
+        }
+
         setCvData(sharedCVData);
       } catch (err) {
         console.error('Error loading shared CV:', err);
-        setError(err.message || 'Failed to load CV. The link may be invalid or expired.');
+
+        // More specific error messages
+        let errorMessage = 'Failed to load CV. ';
+        if (err.message.includes('expired')) {
+          errorMessage += 'This share link has expired. Share links are valid for 30 days.';
+        } else if (err.message.includes('not found') || err.message.includes('Invalid share ID')) {
+          errorMessage += 'The link may be invalid or the CV may have been removed.';
+        } else if (err.message.includes('Network')) {
+          errorMessage += 'Please check your internet connection and try again.';
+        } else {
+          errorMessage += err.message || 'Please try again later.';
+        }
+
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
