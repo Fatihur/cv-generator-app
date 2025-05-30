@@ -35,6 +35,9 @@ class EmailService {
   // Create simple message for EmailJS (plain text format)
   createSimpleMessage(emailData) {
     const template = emailData.template;
+    const cvName = emailData.cvName || 'Untitled CV';
+
+    console.log('📧 Creating message for template:', template, 'CV:', cvName);
 
     switch (template) {
       case 'profile-updated':
@@ -82,6 +85,136 @@ CV Generator Pro Team
 ---
 Made with ❤️ by Fatih
 © 2024 CV Generator Pro`;
+
+      case 'welcome':
+        return `Welcome to CV Generator Pro! 🎉
+
+Hi ${emailData.userName || 'there'}!
+
+Thank you for joining CV Generator Pro - your journey to creating professional CVs starts now!
+
+🚀 What You Can Do:
+• Create unlimited professional CVs
+• Use AI-powered content suggestions
+• Export to PDF with beautiful templates
+• Share your CVs with potential employers
+• Track CV views and engagement
+
+📋 Getting Started:
+1. Complete your profile information
+2. Create your first CV using our guided builder
+3. Use AI assistance to improve your content
+4. Export and share your professional CV
+
+💡 Pro Tips:
+• Keep your CV updated with latest experiences
+• Customize CVs for different job applications
+• Use our AI tools to enhance your descriptions
+• Enable email notifications to stay informed
+
+Need help? Our support team is here to assist you at any time.
+
+Welcome aboard and best of luck with your career journey!
+
+Best regards,
+CV Generator Pro Team
+
+---
+Made with ❤️ by Fatih
+© 2024 CV Generator Pro
+Welcome sent at: ${new Date().toLocaleString()}`;
+
+      case 'cv-created':
+        return `Hi there!
+
+Great news! Your CV has been created successfully on CV Generator Pro.
+
+📄 CV Created: "${cvName}"
+✅ Status: Ready to use
+
+What's Next?
+• Preview your CV to review the content
+• Export to PDF for job applications
+• Share your CV with potential employers
+• Create additional versions for different roles
+
+Your CV is now saved and ready to help you land your dream job!
+
+Best regards,
+CV Generator Pro Team
+
+---
+Made with ❤️ by Fatih
+© 2024 CV Generator Pro
+Created at: ${new Date().toLocaleString()}`;
+
+      case 'cv-updated':
+        return `Hi there!
+
+Your CV has been updated successfully on CV Generator Pro.
+
+📄 CV Updated: "${cvName}"
+✅ Status: Changes saved
+
+Recent Changes:
+• CV content has been modified
+• All updates are now live
+• Ready for export and sharing
+
+Your updated CV is now available in your dashboard.
+
+Best regards,
+CV Generator Pro Team
+
+---
+Made with ❤️ by Fatih
+© 2024 CV Generator Pro
+Updated at: ${new Date().toLocaleString()}`;
+
+      case 'cv-deleted':
+        return `Hi there!
+
+A CV has been deleted from your CV Generator Pro account.
+
+🗑️ CV Deleted: "${cvName}"
+✅ Status: Permanently removed
+
+This action cannot be undone. If this was a mistake, you'll need to recreate the CV.
+
+Security Note:
+If you didn't delete this CV, please contact our support team immediately and consider changing your password.
+
+Best regards,
+CV Generator Pro Team
+
+---
+Made with ❤️ by Fatih
+© 2024 CV Generator Pro
+Deleted at: ${new Date().toLocaleString()}`;
+
+      case 'cv-shared':
+        return `Hi there!
+
+Your CV has been shared successfully on CV Generator Pro.
+
+📤 CV Shared: "${cvName}"
+🔗 Share Link: ${emailData.shareUrl || 'Link generated'}
+⏰ Expires: ${emailData.expiryDate || 'Never'}
+
+Sharing Details:
+• Your CV is now accessible via the share link
+• Recipients can view but not edit your CV
+• You can manage shared links from your dashboard
+
+Track who views your CV and manage your shared links anytime.
+
+Best regards,
+CV Generator Pro Team
+
+---
+Made with ❤️ by Fatih
+© 2024 CV Generator Pro
+Shared at: ${new Date().toLocaleString()}`;
 
       case 'test-email':
         return `Hi there!
@@ -142,102 +275,28 @@ Test sent at: ${new Date().toLocaleString()}`;
         `
       },
       'password-changed': {
-        subject: 'Password Changed Successfully',
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center;">
-              <h1 style="color: white; margin: 0;">CV Generator Pro</h1>
-            </div>
-            <div style="padding: 20px; background: #f9f9f9;">
-              <h2 style="color: #333;">Password Changed Successfully</h2>
-              <p style="color: #666; line-height: 1.6;">
-                Your password has been changed successfully. Your account is now secured with your new password.
-              </p>
-              <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                <h3 style="color: #856404; margin-top: 0;">Security Notice</h3>
-                <p style="color: #856404; margin: 0;">
-                  If you didn't make this change, please contact our support team immediately and consider enabling two-factor authentication.
-                </p>
-              </div>
-              <div style="background: white; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                <h3 style="color: #333; margin-top: 0;">Security Tips:</h3>
-                <ul style="color: #666;">
-                  <li>Use a strong, unique password</li>
-                  <li>Enable two-factor authentication</li>
-                  <li>Don't share your password with anyone</li>
-                  <li>Log out from public computers</li>
-                </ul>
-              </div>
-            </div>
-            <div style="background: #333; color: white; padding: 15px; text-align: center; font-size: 12px;">
-              <p>© 2024 CV Generator Pro. Made with ❤️ by Fatih</p>
-            </div>
-          </div>
-        `
+        subject: 'Password Changed Successfully - CV Generator Pro',
+        html: `Password Changed Successfully! Your account is now secured with your new password.`
+      },
+      'welcome': {
+        subject: 'Welcome to CV Generator Pro! 🎉',
+        html: `Welcome to CV Generator Pro! Thank you for joining us. Your journey to creating professional CVs starts now!`
       },
       'cv-created': {
-        subject: 'CV Created Successfully',
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center;">
-              <h1 style="color: white; margin: 0;">CV Generator Pro</h1>
-            </div>
-            <div style="padding: 20px; background: #f9f9f9;">
-              <h2 style="color: #333;">CV Created Successfully! 🎉</h2>
-              <p style="color: #666; line-height: 1.6;">
-                Congratulations! Your new CV has been created and saved successfully. You're one step closer to landing your dream job.
-              </p>
-              <div style="background: white; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                <h3 style="color: #333; margin-top: 0;">Next Steps:</h3>
-                <ul style="color: #666;">
-                  <li>Review and edit your CV content</li>
-                  <li>Export your CV as PDF</li>
-                  <li>Share your CV with potential employers</li>
-                  <li>Create multiple versions for different roles</li>
-                </ul>
-              </div>
-              <div style="text-align: center; margin: 20px 0;">
-                <a href="#" style="background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-                  View Your CV
-                </a>
-              </div>
-            </div>
-            <div style="background: #333; color: white; padding: 15px; text-align: center; font-size: 12px;">
-              <p>© 2024 CV Generator Pro. Made with ❤️ by Fatih</p>
-            </div>
-          </div>
-        `
+        subject: 'CV Created Successfully - CV Generator Pro',
+        html: `CV Created Successfully! Your new CV "${emailData.cvName || 'Untitled CV'}" has been created and is ready to use.`
+      },
+      'cv-updated': {
+        subject: 'CV Updated Successfully - CV Generator Pro',
+        html: `CV Updated Successfully! Your CV "${emailData.cvName || 'Untitled CV'}" has been updated with your latest changes.`
+      },
+      'cv-deleted': {
+        subject: 'CV Deleted - CV Generator Pro',
+        html: `CV Deleted. Your CV "${emailData.cvName || 'Untitled CV'}" has been permanently removed from your account.`
       },
       'cv-shared': {
-        subject: 'CV Shared Successfully',
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center;">
-              <h1 style="color: white; margin: 0;">CV Generator Pro</h1>
-            </div>
-            <div style="padding: 20px; background: #f9f9f9;">
-              <h2 style="color: #333;">CV Shared Successfully! 📤</h2>
-              <p style="color: #666; line-height: 1.6;">
-                Your CV has been shared successfully. The recipient can now view your professional profile.
-              </p>
-              <div style="background: white; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                <h3 style="color: #333; margin-top: 0;">Sharing Details:</h3>
-                <p style="color: #666; margin: 5px 0;"><strong>Shared on:</strong> {{shareDate}}</p>
-                <p style="color: #666; margin: 5px 0;"><strong>Share link:</strong> {{shareLink}}</p>
-                <p style="color: #666; margin: 5px 0;"><strong>Expires:</strong> {{expiryDate}}</p>
-              </div>
-              <div style="background: #d1ecf1; border: 1px solid #bee5eb; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                <h3 style="color: #0c5460; margin-top: 0;">Pro Tip:</h3>
-                <p style="color: #0c5460; margin: 0;">
-                  You can track who views your CV and manage your shared links from your dashboard.
-                </p>
-              </div>
-            </div>
-            <div style="background: #333; color: white; padding: 15px; text-align: center; font-size: 12px;">
-              <p>© 2024 CV Generator Pro. Made with ❤️ by Fatih</p>
-            </div>
-          </div>
-        `
+        subject: 'CV Shared Successfully - CV Generator Pro',
+        html: `CV Shared Successfully! Your CV "${emailData.cvName || 'Untitled CV'}" has been shared and is now accessible via the provided link.`
       },
       'test-email': {
         subject: 'Test Email from CV Generator',
@@ -304,13 +363,21 @@ Test sent at: ${new Date().toLocaleString()}`;
       // Create simple text message for EmailJS
       const simpleMessage = this.createSimpleMessage(emailData);
 
+      console.log('📧 Preparing EmailJS send:', {
+        to: emailData.to,
+        subject: emailData.subject,
+        template: emailData.template,
+        messageLength: simpleMessage.length
+      });
+
       const templateParams = {
         to_email: emailData.to,
         subject: emailData.subject,
         message: simpleMessage,
         from_name: this.fromName,
         reply_to: this.fromEmail,
-        user_name: emailData.to.split('@')[0] // Extract name from email
+        user_name: emailData.to.split('@')[0], // Extract name from email
+        cv_name: emailData.cvName || 'Untitled CV'
       };
 
       const response = await emailjs.send(

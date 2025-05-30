@@ -211,28 +211,58 @@ class NotificationService {
     }
   }
 
+  // Send email notification directly
+  async sendEmailNotification(userId, emailData) {
+    try {
+      console.log('📧 NotificationService.sendEmailNotification called:', {
+        userId,
+        emailData: JSON.stringify(emailData, null, 2)
+      });
+
+      const result = await emailService.sendEmail(emailData);
+      console.log('✅ Email sent via NotificationService:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ Error in sendEmailNotification:', error);
+      throw error;
+    }
+  }
+
   // Send notification based on user preferences
   async sendNotification(userId, notificationData) {
     try {
+      console.log('🔔 NotificationService.sendNotification called:', {
+        userId,
+        notificationData: JSON.stringify(notificationData, null, 2)
+      });
+
       const preferences = await this.getNotificationPreferences(userId);
+      console.log('⚙️ User notification preferences:', preferences);
+
       const results = [];
 
       // Send email if enabled
       if (preferences.emailNotifications && notificationData.email) {
+        console.log('✅ Email notifications enabled, sending email...');
         try {
           const emailResult = await this.sendEmailNotification(userId, notificationData.email);
           results.push({ type: 'email', success: true, result: emailResult });
         } catch (error) {
+          console.error('❌ Email notification failed:', error);
           results.push({ type: 'email', success: false, error: error.message });
         }
+      } else {
+        console.log('❌ Email notifications disabled or no email data:', {
+          emailNotifications: preferences.emailNotifications,
+          hasEmailData: !!notificationData.email
+        });
       }
 
-
-
+      console.log('📊 Notification results:', results);
       return results;
     } catch (error) {
-      console.error('Error sending notification:', error);
-      throw new Error('Failed to send notification');
+      console.error('❌ Error in sendNotification:', error);
+      throw new Error('Failed to send notification: ' + error.message);
     }
   }
 
@@ -260,11 +290,32 @@ class NotificationService {
           template: 'cv-created'
         }
       },
+      cvUpdated: {
+        email: {
+          subject: 'CV Updated Successfully',
+          message: 'Your CV has been updated successfully.',
+          template: 'cv-updated'
+        }
+      },
+      cvDeleted: {
+        email: {
+          subject: 'CV Deleted',
+          message: 'Your CV has been deleted from your account.',
+          template: 'cv-deleted'
+        }
+      },
       cvShared: {
         email: {
           subject: 'CV Shared Successfully',
           message: 'Your CV has been shared successfully.',
           template: 'cv-shared'
+        }
+      },
+      welcome: {
+        email: {
+          subject: 'Welcome to CV Generator Pro! 🎉',
+          message: 'Welcome to CV Generator Pro! Your journey to creating professional CVs starts now.',
+          template: 'welcome'
         }
       }
     };
@@ -273,23 +324,60 @@ class NotificationService {
   // Send template notification
   async sendTemplateNotification(userId, templateName, customData = {}) {
     try {
+      console.log('🎯 sendTemplateNotification called:', {
+        userId,
+        templateName,
+        customData: JSON.stringify(customData, null, 2)
+      });
+
       const templates = this.getNotificationTemplates();
-      const template = templates[templateName];
+      console.log('📋 Available templates:', Object.keys(templates));
+
+      // Map kebab-case to camelCase for template names
+      const templateMap = {
+        'cv-created': 'cvCreated',
+        'cv-updated': 'cvUpdated',
+        'cv-deleted': 'cvDeleted',
+        'cv-shared': 'cvShared',
+        'profile-updated': 'profileUpdated',
+        'password-changed': 'passwordChanged',
+        'test-email': 'profileUpdated', // Use profile template for test
+        'welcome': 'welcome'
+      };
+
+      const mappedTemplateName = templateMap[templateName] || templateName;
+      console.log('🔄 Template name mapping:', templateName, '→', mappedTemplateName);
+
+      const template = templates[mappedTemplateName];
 
       if (!template) {
-        throw new Error(`Notification template '${templateName}' not found`);
+        console.error('❌ Template not found:', {
+          originalName: templateName,
+          mappedName: mappedTemplateName,
+          availableTemplates: Object.keys(templates)
+        });
+        throw new Error(`Notification template '${templateName}' (mapped to '${mappedTemplateName}') not found`);
       }
+
+      console.log('✅ Template found:', template);
 
       const notificationData = {
         email: {
           ...template.email,
-          ...customData.email
+          ...customData.email,
+          template: templateName, // Keep original template name for EmailJS
+          cvName: customData.email?.cvName,
+          shareUrl: customData.email?.shareUrl,
+          expiryDate: customData.email?.expiryDate,
+          userName: customData.email?.userName
         }
       };
 
+      console.log('📦 Final notification data:', JSON.stringify(notificationData, null, 2));
+
       return await this.sendNotification(userId, notificationData);
     } catch (error) {
-      console.error('Error sending template notification:', error);
+      console.error('❌ Error in sendTemplateNotification:', error);
       throw error;
     }
   }

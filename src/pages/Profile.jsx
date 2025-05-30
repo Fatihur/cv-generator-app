@@ -7,6 +7,8 @@ import ChangePasswordModal from '../components/ChangePasswordModal';
 import TwoFactorModal from '../components/TwoFactorModal';
 import SessionsModal from '../components/SessionsModal';
 import ToggleSwitch from '../components/ToggleSwitch';
+import EmailDebug from '../components/EmailDebug';
+import SimpleEmailTest from '../components/SimpleEmailTest';
 import profileService from '../services/profileService';
 import notificationService from '../services/notificationService';
 import toast from 'react-hot-toast';
@@ -22,6 +24,7 @@ const Profile = () => {
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showTwoFactor, setShowTwoFactor] = useState(false);
   const [showSessions, setShowSessions] = useState(false);
+  const [showEmailDebug, setShowEmailDebug] = useState(false);
 
   // Security states
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
@@ -406,7 +409,7 @@ const Profile = () => {
           <p className="text-xs text-green-800 dark:text-green-200 mt-1">
             Real emails will be sent via EmailJS. Check your inbox after profile updates.
           </p>
-          <div className="mt-3">
+          <div className="mt-3 space-x-2">
             <button
               onClick={async () => {
                 try {
@@ -422,7 +425,57 @@ const Profile = () => {
             >
               Send Test Email
             </button>
+
+            <button
+              onClick={async () => {
+                try {
+                  await notificationService.sendTemplateNotification(user?.uid || 'guest', 'cv-created', {
+                    email: {
+                      to: user?.email || 'test@example.com',
+                      cvName: 'Test CV - Software Engineer Resume'
+                    }
+                  });
+                  toast.success('CV Created email sent! Check your inbox.');
+                } catch (error) {
+                  toast.error('CV Created email failed: ' + error.message);
+                }
+              }}
+              className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md transition-colors"
+            >
+              Test CV Created
+            </button>
+
+            <button
+              onClick={async () => {
+                try {
+                  await notificationService.sendTemplateNotification(user?.uid || 'guest', 'welcome', {
+                    email: {
+                      to: user?.email || 'test@example.com',
+                      userName: user?.displayName || user?.email?.split('@')[0] || 'there'
+                    }
+                  });
+                  toast.success('Welcome email sent! Check your inbox.');
+                } catch (error) {
+                  toast.error('Welcome email failed: ' + error.message);
+                }
+              }}
+              className="text-xs bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded-md transition-colors"
+            >
+              Test Welcome
+            </button>
+
+            <button
+              onClick={() => setShowEmailDebug(true)}
+              className="text-xs bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded-md transition-colors"
+            >
+              Debug Center
+            </button>
           </div>
+        </div>
+
+        {/* Simple Email Test */}
+        <div className="mb-6">
+          <SimpleEmailTest />
         </div>
 
         <div className="space-y-4">
@@ -600,6 +653,11 @@ const Profile = () => {
       <SessionsModal
         isOpen={showSessions}
         onClose={() => setShowSessions(false)}
+      />
+
+      <EmailDebug
+        isOpen={showEmailDebug}
+        onClose={() => setShowEmailDebug(false)}
       />
     </div>
   );

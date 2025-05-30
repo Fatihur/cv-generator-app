@@ -7,6 +7,7 @@ import ExportModal from '../components/ExportModal';
 import BackButton from '../components/BackButton';
 import cvService from '../services/cvService';
 import exportService from '../services/exportService';
+import notificationService from '../services/notificationService';
 import toast from 'react-hot-toast';
 
 const SavedCVs = () => {
@@ -75,6 +76,22 @@ const SavedCVs = () => {
 
       await exportService.copyToClipboard(shareUrl);
       toast.success(`Share link copied to clipboard! Link: ${shareUrl.split('/').pop()}`);
+
+      // Send CV shared email notification
+      try {
+        if (!isGuestMode && user?.email) {
+          await notificationService.sendTemplateNotification(user.uid, 'cv-shared', {
+            email: {
+              to: user.email,
+              cvName: cv.cvName || cv.personal?.fullName || 'Untitled CV',
+              shareUrl: shareUrl,
+              expiryDate: 'Never'
+            }
+          });
+        }
+      } catch (notifError) {
+        console.error('Failed to send CV shared notification:', notifError);
+      }
     } catch (error) {
       console.error('Share error:', error);
       toast.error(error.message || 'Failed to generate share link');
@@ -97,6 +114,10 @@ const SavedCVs = () => {
     if (!confirmed) return;
 
     try {
+      // Find the CV to get its name for the email notification
+      const cvToDelete = cvs.find(cv => cv.id === cvId);
+      const cvName = cvToDelete?.cvName || cvToDelete?.personal?.fullName || 'Untitled CV';
+
       if (isGuestMode) {
         // Delete from localStorage for guest users
         await cvService.deleteGuestCV(cvId);
@@ -110,6 +131,20 @@ const SavedCVs = () => {
       }
 
       toast.success('CV deleted successfully');
+
+      // Send CV deleted email notification
+      try {
+        if (!isGuestMode && user?.email) {
+          await notificationService.sendTemplateNotification(user.uid, 'cv-deleted', {
+            email: {
+              to: user.email,
+              cvName: cvName
+            }
+          });
+        }
+      } catch (notifError) {
+        console.error('Failed to send CV deleted notification:', notifError);
+      }
 
       // Close preview modal if the deleted CV was being previewed
       if (selectedCV && selectedCV.id === cvId) {
@@ -141,6 +176,22 @@ const SavedCVs = () => {
         const shareUrl = exportService.generateShareableLink(selectedCV);
         await exportService.copyToClipboard(shareUrl);
         toast.success('Share link copied to clipboard!');
+
+        // Send CV shared email notification
+        try {
+          if (!isGuestMode && user?.email) {
+            await notificationService.sendTemplateNotification(user.uid, 'cv-shared', {
+              email: {
+                to: user.email,
+                cvName: selectedCV.cvName || selectedCV.personal?.fullName || 'Untitled CV',
+                shareUrl: shareUrl,
+                expiryDate: 'Never'
+              }
+            });
+          }
+        } catch (notifError) {
+          console.error('Failed to send CV shared notification:', notifError);
+        }
       }
     } catch (error) {
       toast.error(error.message || 'Export failed');

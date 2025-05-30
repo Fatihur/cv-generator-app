@@ -9,6 +9,7 @@ import BackButton from '../components/BackButton';
 
 import cvService from '../services/cvService';
 import exportService from '../services/exportService';
+import notificationService from '../services/notificationService';
 import toast from 'react-hot-toast';
 
 const CreateCV = () => {
@@ -191,6 +192,20 @@ const CreateCV = () => {
           const savedCV = await cvService.updateCV(editingCVId, cleanedData, user.uid);
           toast.success('CV updated successfully!');
         }
+
+        // Send CV updated email notification
+        try {
+          if (!isGuestMode && user?.email) {
+            await notificationService.sendTemplateNotification(user.uid, 'cv-updated', {
+              email: {
+                to: user.email,
+                cvName: cleanedData.cvName || 'Untitled CV'
+              }
+            });
+          }
+        } catch (notifError) {
+          console.error('Failed to send CV updated notification:', notifError);
+        }
       } else {
         // Create new CV
         if (isGuestMode) {
@@ -199,6 +214,20 @@ const CreateCV = () => {
         } else {
           const savedCV = await cvService.saveCV(cleanedData, user.uid);
           toast.success('CV saved successfully!');
+        }
+
+        // Send CV created email notification
+        try {
+          if (!isGuestMode && user?.email) {
+            await notificationService.sendTemplateNotification(user.uid, 'cv-created', {
+              email: {
+                to: user.email,
+                cvName: cleanedData.cvName || 'Untitled CV'
+              }
+            });
+          }
+        } catch (notifError) {
+          console.error('Failed to send CV created notification:', notifError);
         }
       }
 
@@ -253,6 +282,22 @@ const CreateCV = () => {
         const shareUrl = exportService.generateShareableLink(watchedData);
         await exportService.copyToClipboard(shareUrl);
         toast.success('Share link copied to clipboard!');
+
+        // Send CV shared email notification
+        try {
+          if (!isGuestMode && user?.email) {
+            await notificationService.sendTemplateNotification(user.uid, 'cv-shared', {
+              email: {
+                to: user.email,
+                cvName: watchedData.cvName || 'Untitled CV',
+                shareUrl: shareUrl,
+                expiryDate: 'Never'
+              }
+            });
+          }
+        } catch (notifError) {
+          console.error('Failed to send CV shared notification:', notifError);
+        }
       }
     } catch (error) {
       toast.error(error.message || 'Export failed');

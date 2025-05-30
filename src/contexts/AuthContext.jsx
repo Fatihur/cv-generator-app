@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { 
-  onAuthStateChanged, 
-  signInWithEmailAndPassword, 
+import {
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
   signInWithPopup,
@@ -9,6 +9,7 @@ import {
   updateProfile
 } from 'firebase/auth';
 import { auth, googleProvider } from '../config/firebase';
+import welcomeService from '../services/welcomeService';
 import toast from 'react-hot-toast';
 
 const AuthContext = createContext();
@@ -27,11 +28,18 @@ export const AuthProvider = ({ children }) => {
   const [isGuestMode, setIsGuestMode] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
       setLoading(false);
       if (user) {
         setIsGuestMode(false);
+
+        // Handle welcome email for new users
+        try {
+          await welcomeService.handleUserLogin(user);
+        } catch (error) {
+          console.error('Error handling user login for welcome email:', error);
+        }
       }
     });
 
