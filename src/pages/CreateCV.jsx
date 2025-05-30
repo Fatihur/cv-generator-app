@@ -903,80 +903,99 @@ const CreateCV = () => {
 
   return (
     <div className="max-w-6xl mx-auto">
-      <div className="mb-6">
-        <BackButton to="/dashboard" label="Back to Dashboard" />
+      {/* Mobile Header */}
+      <div className="lg:hidden">
+        <div className="mb-4">
+          <BackButton to="/dashboard" label="Back to Dashboard" />
+        </div>
+
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-secondary-900 dark:text-white mb-2">
+            {isEditing ? 'Edit Your CV' : 'Create Your CV'}
+          </h1>
+          <p className="text-sm text-secondary-600 dark:text-secondary-400">
+            Fill out the sections below to build your professional CV
+          </p>
+        </div>
       </div>
 
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold text-secondary-900 dark:text-white">
-          {isEditing ? 'Edit Your CV' : 'Create Your CV'}
-        </h1>
-        <div className="flex space-x-3">
-          <button
-            type="button"
-            onClick={handlePreview}
-            className="btn-secondary flex items-center space-x-2"
-          >
-            <Eye className="w-4 h-4" />
-            <span>Preview</span>
-          </button>
+      {/* Desktop Header */}
+      <div className="hidden lg:block">
+        <div className="mb-6">
+          <BackButton to="/dashboard" label="Back to Dashboard" />
+        </div>
 
-          {/* Export Dropdown */}
-          <div className="relative">
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold text-secondary-900 dark:text-white">
+            {isEditing ? 'Edit Your CV' : 'Create Your CV'}
+          </h1>
+          <div className="flex space-x-3">
             <button
               type="button"
-              onClick={() => setShowExportMenu(!showExportMenu)}
+              onClick={handlePreview}
               className="btn-secondary flex items-center space-x-2"
             >
-              <Download className="w-4 h-4" />
-              <span>Export</span>
+              <Eye className="w-4 h-4" />
+              <span>Preview</span>
             </button>
 
-            {showExportMenu && (
-              <div className="absolute top-full right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 min-w-48">
-                <div className="py-2">
-                  <button
-                    onClick={() => { handleExport('pdf'); setShowExportMenu(false); }}
-                    className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
-                  >
-                    <Download className="w-4 h-4" />
-                    <span>PDF Standard</span>
-                  </button>
-                  <button
-                    onClick={() => { handleExport('pdf-compact'); setShowExportMenu(false); }}
-                    className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
-                  >
-                    <Download className="w-4 h-4" />
-                    <span>PDF Compact</span>
-                  </button>
-                  <button
-                    onClick={() => { handleExport('pdf-detailed'); setShowExportMenu(false); }}
-                    className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
-                  >
-                    <Download className="w-4 h-4" />
-                    <span>PDF Detailed</span>
-                  </button>
-                  <div className="border-t border-gray-200 dark:border-gray-600 my-1"></div>
-                  <button
-                    onClick={() => { handleExport('pdf-image'); setShowExportMenu(false); }}
-                    className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
-                  >
-                    <Download className="w-4 h-4" />
-                    <span>PDF Visual (with icons)</span>
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+            {/* Export Dropdown */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowExportMenu(!showExportMenu)}
+                className="btn-secondary flex items-center space-x-2"
+              >
+                <Download className="w-4 h-4" />
+                <span>Export</span>
+              </button>
 
-          <button
-            onClick={handleSubmit(onSubmit)}
-            disabled={loading}
-            className="btn-primary flex items-center space-x-2 disabled:opacity-50"
-          >
-            <Save className="w-4 h-4" />
-            <span>{loading ? 'Saving...' : 'Save CV'}</span>
-          </button>
+              {showExportMenu && (
+                <div className="absolute top-full right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 min-w-48">
+                  <div className="py-2">
+                    <button
+                      onClick={() => { handleExport('pdf'); setShowExportMenu(false); }}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span>PDF Standard</span>
+                    </button>
+                    <button
+                      onClick={() => { handleExport('pdf-compact'); setShowExportMenu(false); }}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span>PDF Compact</span>
+                    </button>
+                    <button
+                      onClick={() => { handleExport('pdf-detailed'); setShowExportMenu(false); }}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span>PDF Detailed</span>
+                    </button>
+                    <div className="border-t border-gray-200 dark:border-gray-600 my-1"></div>
+                    <button
+                      onClick={() => { handleExport('pdf-image'); setShowExportMenu(false); }}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span>PDF Visual (with icons)</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={handleSubmit(onSubmit)}
+              disabled={loading}
+              className="btn-primary flex items-center space-x-2 disabled:opacity-50"
+            >
+              <Save className="w-4 h-4" />
+              <span>{loading ? 'Saving...' : 'Save CV'}</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1008,10 +1027,80 @@ const CreateCV = () => {
 
         {/* Main Content */}
         <div className="lg:col-span-3">
-          <form className="card p-8">
+          <form className="card p-4 lg:p-8">
             {renderCurrentSection()}
           </form>
         </div>
+      </div>
+
+      {/* Mobile Action Buttons */}
+      <div className="lg:hidden mt-8 space-y-4">
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={handlePreview}
+            className="btn-secondary flex items-center justify-center space-x-2 py-3"
+          >
+            <Eye className="w-4 h-4" />
+            <span>Preview</span>
+          </button>
+
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              className="btn-secondary w-full flex items-center justify-center space-x-2 py-3"
+            >
+              <Download className="w-4 h-4" />
+              <span>Export</span>
+            </button>
+
+            {showExportMenu && (
+              <div className="absolute bottom-full left-0 mb-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 w-full">
+                <div className="py-2">
+                  <button
+                    onClick={() => { handleExport('pdf'); setShowExportMenu(false); }}
+                    className="w-full text-left px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>PDF Standard</span>
+                  </button>
+                  <button
+                    onClick={() => { handleExport('pdf-compact'); setShowExportMenu(false); }}
+                    className="w-full text-left px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>PDF Compact</span>
+                  </button>
+                  <button
+                    onClick={() => { handleExport('pdf-detailed'); setShowExportMenu(false); }}
+                    className="w-full text-left px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>PDF Detailed</span>
+                  </button>
+                  <div className="border-t border-gray-200 dark:border-gray-600 my-1"></div>
+                  <button
+                    onClick={() => { handleExport('pdf-image'); setShowExportMenu(false); }}
+                    className="w-full text-left px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>PDF Visual (with icons)</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <button
+          onClick={handleSubmit(onSubmit)}
+          disabled={loading}
+          className="btn-primary w-full flex items-center justify-center space-x-2 py-3 disabled:opacity-50"
+        >
+          <Save className="w-4 h-4" />
+          <span>{loading ? 'Saving...' : 'Save CV'}</span>
+        </button>
       </div>
 
       {/* AI Modal */}
