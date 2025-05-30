@@ -132,8 +132,44 @@ const SharedCV = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+      {/* Mobile Header */}
+      <div className="lg:hidden bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="px-4 py-3">
+          <div className="flex items-center justify-between mb-3">
+            <Link
+              to="/"
+              className="text-gray-600 hover:text-gray-800 flex items-center space-x-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="text-sm">Back</span>
+            </Link>
+            <div className="text-center flex-1 mx-4">
+              <h1 className="text-lg font-semibold text-gray-900 truncate">
+                {personal?.fullName || 'Professional CV'}
+              </h1>
+              <p className="text-xs text-gray-600">Shared CV</p>
+            </div>
+          </div>
+          <div className="flex space-x-2">
+            <button
+              onClick={handleExportPDF}
+              className="btn-primary flex-1 flex items-center justify-center space-x-2 py-2 text-sm"
+            >
+              <Download className="w-4 h-4" />
+              <span>Download PDF</span>
+            </button>
+            <Link
+              to="/"
+              className="btn-secondary flex-1 flex items-center justify-center py-2 text-sm"
+            >
+              Create Your CV
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Header */}
+      <div className="hidden lg:block bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Link
@@ -169,37 +205,37 @@ const SharedCV = () => {
       </div>
 
       {/* CV Content */}
-      <div className="max-w-4xl mx-auto p-8">
-        <div className="bg-white rounded-lg shadow-sm p-8" style={{ minHeight: '297mm' }}>
+      <div className="max-w-4xl mx-auto p-4 lg:p-8">
+        <div className="bg-white rounded-lg shadow-sm p-4 lg:p-8" style={{ minHeight: '297mm' }}>
           {/* Header Section */}
-          <div className="text-center mb-8 pb-6 border-b-2 border-gray-200">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <div className="text-center mb-6 lg:mb-8 pb-4 lg:pb-6 border-b-2 border-gray-200">
+            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-3 lg:mb-2">
               {personal?.fullName || 'Professional Name'}
             </h1>
 
-            <div className="flex flex-wrap justify-center items-center gap-4 text-gray-600">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap justify-center items-center gap-2 sm:gap-4 text-gray-600 text-sm lg:text-base">
               {personal?.email && (
                 <div className="flex items-center space-x-1">
-                  <Mail className="w-4 h-4" />
-                  <span>{personal.email}</span>
+                  <Mail className="w-4 h-4 flex-shrink-0" />
+                  <span className="break-all">{personal.email}</span>
                 </div>
               )}
               {personal?.phone && (
                 <div className="flex items-center space-x-1">
-                  <Phone className="w-4 h-4" />
+                  <Phone className="w-4 h-4 flex-shrink-0" />
                   <span>{personal.phone}</span>
                 </div>
               )}
               {personal?.location && (
                 <div className="flex items-center space-x-1">
-                  <MapPin className="w-4 h-4" />
-                  <span>{personal.location}</span>
+                  <MapPin className="w-4 h-4 flex-shrink-0" />
+                  <span className="text-center">{personal.location}</span>
                 </div>
               )}
               {personal?.website && (
                 <div className="flex items-center space-x-1">
-                  <Globe className="w-4 h-4" />
-                  <span>{personal.website}</span>
+                  <Globe className="w-4 h-4 flex-shrink-0" />
+                  <span className="break-all">{personal.website}</span>
                 </div>
               )}
             </div>
@@ -207,11 +243,11 @@ const SharedCV = () => {
 
           {/* Professional Summary */}
           {personal?.summary && (
-            <div className="mb-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-3 pb-1 border-b border-gray-300">
+            <div className="mb-6 lg:mb-8">
+              <h2 className="text-lg lg:text-xl font-bold text-gray-900 mb-3 pb-1 border-b border-gray-300">
                 Professional Summary
               </h2>
-              <p className="text-gray-700 leading-relaxed">
+              <p className="text-gray-700 leading-relaxed text-sm lg:text-base">
                 {personal.summary}
               </p>
             </div>
@@ -219,28 +255,28 @@ const SharedCV = () => {
 
           {/* Work Experience */}
           {experience.length > 0 && (
-            <div className="mb-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-4 pb-1 border-b border-gray-300">
+            <div className="mb-6 lg:mb-8">
+              <h2 className="text-lg lg:text-xl font-bold text-gray-900 mb-4 pb-1 border-b border-gray-300">
                 Work Experience
               </h2>
-              <div className="space-y-6">
+              <div className="space-y-4 lg:space-y-6">
                 {experience.map((exp, index) => (
                   <div key={index} className="relative">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-2 gap-1 sm:gap-0">
+                      <div className="flex-1">
+                        <h3 className="text-base lg:text-lg font-semibold text-gray-900">
                           {exp.position || 'Position Title'}
                         </h3>
-                        <p className="text-gray-700 font-medium">
+                        <p className="text-gray-700 font-medium text-sm lg:text-base">
                           {exp.company || 'Company Name'}
                         </p>
                       </div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-xs lg:text-sm text-gray-600 sm:text-right sm:ml-4 flex-shrink-0">
                         {formatDateRange(exp.startDate, exp.endDate, exp.current)}
                       </div>
                     </div>
                     {exp.description && (
-                      <div className="text-gray-700 leading-relaxed">
+                      <div className="text-gray-700 leading-relaxed text-sm lg:text-base mt-2">
                         {exp.description.split('\n').map((line, lineIndex) => (
                           <p key={lineIndex} className="mb-1">
                             {line}
@@ -256,23 +292,23 @@ const SharedCV = () => {
 
           {/* Education */}
           {education.length > 0 && (
-            <div className="mb-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-4 pb-1 border-b border-gray-300">
+            <div className="mb-6 lg:mb-8">
+              <h2 className="text-lg lg:text-xl font-bold text-gray-900 mb-4 pb-1 border-b border-gray-300">
                 Education
               </h2>
-              <div className="space-y-4">
+              <div className="space-y-3 lg:space-y-4">
                 {education.map((edu, index) => (
-                  <div key={index} className="flex justify-between items-start">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">
+                  <div key={index} className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-0">
+                    <div className="flex-1">
+                      <h3 className="text-base lg:text-lg font-semibold text-gray-900">
                         {edu.degree || 'Degree'}
                         {edu.field && ` in ${edu.field}`}
                       </h3>
-                      <p className="text-gray-700">
+                      <p className="text-gray-700 text-sm lg:text-base">
                         {edu.institution || 'Institution Name'}
                       </p>
                     </div>
-                    <div className="text-sm text-gray-600">
+                    <div className="text-xs lg:text-sm text-gray-600 sm:text-right sm:ml-4 flex-shrink-0">
                       {edu.graduationYear || formatDateRange(edu.startDate, edu.endDate, edu.current)}
                     </div>
                   </div>
@@ -283,17 +319,17 @@ const SharedCV = () => {
 
           {/* Skills */}
           {skills.length > 0 && (
-            <div className="mb-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-4 pb-1 border-b border-gray-300">
+            <div className="mb-6 lg:mb-8">
+              <h2 className="text-lg lg:text-xl font-bold text-gray-900 mb-4 pb-1 border-b border-gray-300">
                 Skills
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4">
                 {skills.map((skill, index) => (
-                  <div key={index} className="flex justify-between items-center">
-                    <span className="text-gray-900 font-medium">
+                  <div key={index} className="flex justify-between items-center p-2 lg:p-0">
+                    <span className="text-gray-900 font-medium text-sm lg:text-base">
                       {skill.name || 'Skill Name'}
                     </span>
-                    <span className="text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                    <span className="text-xs lg:text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded ml-2 flex-shrink-0">
                       {skill.level || 'Intermediate'}
                     </span>
                   </div>
@@ -304,16 +340,19 @@ const SharedCV = () => {
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-8 py-6 border-t border-gray-200">
-          <p className="text-gray-600 mb-4">
+        <div className="text-center mt-6 lg:mt-8 py-4 lg:py-6 border-t border-gray-200">
+          <p className="text-gray-600 mb-3 lg:mb-4 text-sm lg:text-base">
             Want to create your own professional CV?
           </p>
           <Link
             to="/"
-            className="btn-primary inline-flex items-center space-x-2"
+            className="btn-primary inline-flex items-center space-x-2 text-sm lg:text-base"
           >
             <span>Create Your CV</span>
           </Link>
+          <p className="text-xs text-gray-500 mt-4">
+            Made with ❤️ by Fatih
+          </p>
         </div>
       </div>
     </div>
